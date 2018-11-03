@@ -1,5 +1,5 @@
 /*
-   JANS: Just Another Number Sieve
+   JANS: just another number sieve
    Copyright (C) 2018 Sebastian Wouters
 
    This program is free software; you can redistribute it and/or modify
