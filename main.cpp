@@ -35,15 +35,15 @@ void test1(){
    std::string rsa_100_p_hex = "19fbd41d69aa3d86009a967db3379c63cd501f24f7";
    std::string rsa_100_q_hex = "1b6f141f98eeb619bc0360220160a5f75ea07cdf1d";
 
-   jans::big_int n1; n1.set( rsa_100_n_bin, 2  );
-   jans::big_int n2; n2.set( rsa_100_n_dec, 10 );
-   jans::big_int n3; n3.set( rsa_100_n_hex, 16 );
+   jans::big_int n1; n1.read( rsa_100_n_bin, 2  );
+   jans::big_int n2; n2.read( rsa_100_n_dec, 10 );
+   jans::big_int n3; n3.read( rsa_100_n_hex, 16 );
 
    const bool equal12 = jans::big_int::compare( n1, n2 );
    const bool equal13 = jans::big_int::compare( n1, n3 );
 
-   std::string n_bin = n3.str( 2  ); const bool equal_bin = ( n_bin.compare( rsa_100_n_bin ) == 0 );
-   std::string n_hex = n2.str( 16 ); const bool equal_hex = ( n_hex.compare( rsa_100_n_hex ) == 0 );
+   std::string n_bin = n3.write( 2  ); const bool equal_bin = ( n_bin.compare( rsa_100_n_bin ) == 0 );
+   std::string n_hex = n2.write( 16 ); const bool equal_hex = ( n_hex.compare( rsa_100_n_hex ) == 0 );
    std::cout << "Equal(n1,n2) = " << equal12 << std::endl;
    std::cout << "Equal(n1,n3) = " << equal13 << std::endl;
    std::cout << "Equal(bin)   = " << equal_bin << std::endl;

@@ -39,11 +39,10 @@ TODO:
 
 */
 
-const char jans::big_int::__conversion__[ 16 ] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
-
 jans::big_int::big_int(){
 
    sign = true;
+   lead = 0;
    __clear__( data );
 
 }
@@ -52,56 +51,15 @@ jans::big_int::~big_int(){}
 
 void jans::big_int::sanity_check(){
 
-   assert( sizeof(unsigned int) > sizeof(unsigned char) );
+   std::cout << "num_bits(ubase_t)  = " << sizeof(ubase_t)  * CHAR_BIT << std::endl;
+   std::cout << "num_bits(ucarry_t) = " << sizeof(ucarry_t) * CHAR_BIT << std::endl;
+   assert( sizeof(ucarry_t) > sizeof(ubase_t) );
 
 }
 
-void jans::big_int::__clear__( unsigned char * a ){
+void jans::big_int::__clear__( ubase_t * a ){
 
    for ( int i = 0; i < NUM_BLOCK; i++ ){ a[ i ] &= __00000000__; }
-
-}
-
-void jans::big_int::__add3kernel__( unsigned char * res, unsigned char * a, unsigned char * b, const int is ){
-
-   unsigned int z = 0;
-   for ( int i = is; i < NUM_BLOCK; i++ ){
-      unsigned int x = a[ i ];
-      unsigned int y = b[ i ];
-      z = x + y + z;
-      res[ i ] = z & __11111111__;
-      z = z >> BLOCK_BIT;
-   }
-   assert( z == 0 ); // Else overflow exception
-
-}
-
-void jans::big_int::__multiply3kernel__( unsigned char * res, unsigned char * temp, unsigned char * a, unsigned char * b ){
-
-   // Block version of Russian peasant
-   for ( int ib = 0; ib < NUM_BLOCK; ib++ ){
-      if ( b[ ib ] != __00000000__ ){
-         jans::big_int::__multiply3kernel__( temp, a, b[ ib ], ib );
-         jans::big_int::__add3kernel__( res, temp, res, ib );
-      }
-   }
-
-}
-
-void jans::big_int::__multiply3kernel__( unsigned char * res, unsigned char * a, const unsigned char b, const int ib ){
-
-   unsigned int z = 0;
-   unsigned int y = b;
-   for ( int ia = 0; ia < NUM_BLOCK - ib; ia++ ){
-      unsigned int x = a[ ia ];
-      z = z + ( x * y );
-      res[ ia + ib ] = z & __11111111__;
-      z = z >> BLOCK_BIT;
-   }
-   for ( int ia = NUM_BLOCK - ib; ia < NUM_BLOCK; ia++ ){
-      assert( a[ ia ] != __00000000__ ); // Else overflow exception
-   }
-   assert( z == 0 ); // Else overflow exception
 
 }
 
@@ -111,7 +69,7 @@ bool jans::big_int::compare( big_int & n1, big_int & n2 ){
 
 }
 
-bool jans::big_int::__compare__( unsigned char * a, unsigned char * b ){
+bool jans::big_int::__compare__( ubase_t * a, ubase_t * b ){
 
    for ( int i = 0; i < NUM_BLOCK; i++ ){
       if ( a[ i ] != b[ i ] ){ return false; }
@@ -119,72 +77,4 @@ bool jans::big_int::__compare__( unsigned char * a, unsigned char * b ){
    return true;
 
 }
-
-void jans::big_int::set( const std::string number, const unsigned char base ){
-
-   assert( ( base == 2 ) || ( base == 10 ) || ( base == 16 ) ); // It can be done more efficient for base 2 and 16, but it's for free.
-   __clear__( data );
-
-   unsigned char shift[ NUM_BLOCK ]; __clear__( shift );
-   unsigned char temp [ NUM_BLOCK ]; __clear__( temp  );
-   shift[ 0 ] = 1;
-
-   for ( int i = number.size() - 1; i >= 0; i-- ){
-      const unsigned char digit = __convert_c2i__( number.at( i ) );
-      assert( digit != 17 );
-      if ( digit != __00000000__ ){
-         __multiply3kernel__( temp, shift, digit, 0 );
-         __add3kernel__( data, temp, data, 0 );
-      }
-      __multiply3kernel__( shift, shift, base, 0 );
-   }
-
-}
-
-unsigned char jans::big_int::__convert_c2i__( const char c ){
-
-   for ( unsigned char i = 0; i < 16; i++ ){ if ( c == __conversion__[ i ] ){ return i; } }
-   return 17; // Error code
-
-}
-
-char jans::big_int::__convert_i2c__( const unsigned char c ){
-
-   if ( c >= 16 ){ return 'z'; } // Error code
-   return __conversion__[ c ];
-
-}
-
-std::string jans::big_int::str( const unsigned char base ){
-
-   assert( ( base == 2 ) || ( base == 10 ) || ( base == 16 ) );
-
-   if ( ( base == 2 ) || ( base == 16 ) ){
-
-      const int log2base  = ( ( base == 2 ) ? 1 : 4 );
-      const int text_size = n_bits() / log2base;
-      char text[ text_size ];
-
-      for ( int i = 0; i < NUM_BLOCK; i++ ){
-         for ( int j = 0; j < ( BLOCK_BIT / log2base ); j++ ){
-            text[ text_size - 1 - ( ( BLOCK_BIT / log2base ) * i + j ) ]
-               = __conversion__[ ( ( data[ i ] & ( ( base - 1 ) << ( log2base * j ) ) ) >> ( log2base * j ) ) ];
-         }
-      }
-
-      std::string reduction( text, 0, text_size ); // Clear clutter at end
-      const int start  = reduction.find_first_not_of( '0' );
-      const int length = reduction.size() - start;
-      reduction = reduction.substr( start, length );
-      return reduction;
-
-   }
-
-   return "error";
-
-}
-
-
-
-
 

@@ -17,21 +17,24 @@
    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#ifndef jans_big_int
-#define jans_big_int
+#ifndef JANS_BIG_INT
+#define JANS_BIG_INT
 
 #include <string>
 #include <limits.h>
 
-#define BLOCK_BIT ( sizeof(unsigned char) * CHAR_BIT )
-#define NUM_BLOCK 128
+#define ubase_t  unsigned int
+#define ucarry_t unsigned long long
 
-#define __00000000__ (  ((unsigned char)(0)) )
-#define __11111111__ ( ~((unsigned char)(0)) )
+#define BLOCK_BIT ( sizeof(unsigned int) * CHAR_BIT )
+#define NUM_BLOCK ( 1024 / BLOCK_BIT )
 
-#define SET_BIT(A,k) ( A[ ( ( k ) / ( sizeof(unsigned char) * CHAR_BIT ) ) ] |=  ( 1 << ( ( k ) % ( sizeof(unsigned char) * CHAR_BIT ) ) ) )
-#define DEL_BIT(A,k) ( A[ ( ( k ) / ( sizeof(unsigned char) * CHAR_BIT ) ) ] &= ~( 1 << ( ( k ) % ( sizeof(unsigned char) * CHAR_BIT ) ) ) )
-#define GET_BIT(A,k) ( A[ ( ( k ) / ( sizeof(unsigned char) * CHAR_BIT ) ) ] &   ( 1 << ( ( k ) % ( sizeof(unsigned char) * CHAR_BIT ) ) ) )
+#define __00000000__ (  ((unsigned int)(0)) )
+#define __11111111__ ( ~((unsigned int)(0)) )
+
+#define SET_BIT(A,k) ( A[ ( ( k ) / ( sizeof(unsigned int) * CHAR_BIT ) ) ] |=  ( 1 << ( ( k ) % ( sizeof(unsigned int) * CHAR_BIT ) ) ) )
+#define DEL_BIT(A,k) ( A[ ( ( k ) / ( sizeof(unsigned int) * CHAR_BIT ) ) ] &= ~( 1 << ( ( k ) % ( sizeof(unsigned int) * CHAR_BIT ) ) ) )
+#define GET_BIT(A,k) ( A[ ( ( k ) / ( sizeof(unsigned int) * CHAR_BIT ) ) ] &   ( 1 << ( ( k ) % ( sizeof(unsigned int) * CHAR_BIT ) ) ) )
 
 namespace jans{
 
@@ -43,8 +46,6 @@ namespace jans{
 
          virtual ~big_int();
 
-         void set( const std::string number, const unsigned char base );
-
          static bool compare( big_int & n1, big_int & n2 );
 
          static int n_bits(){ return ( NUM_BLOCK * BLOCK_BIT ); }
@@ -53,31 +54,44 @@ namespace jans{
 
          static void sanity_check();
 
-         std::string str( const unsigned char base );
+         void read( const std::string number, const ubase_t base );
 
-         std::string str_hex();
+         std::string write( const ubase_t base );
 
       private:
 
-         unsigned char data[ NUM_BLOCK ];
+         ubase_t data[ NUM_BLOCK ];
 
          bool sign;
 
-         static void __clear__( unsigned char * a );
+         int lead; // Upper bound for loops over the blocks: lead = 1 + max{i}( data[ i ] != 0 )
 
-         static void __add3kernel__( unsigned char * res, unsigned char * a, unsigned char * b, const int is );
+         static void __clear__( ubase_t * a );
 
-         static void __multiply3kernel__( unsigned char * res, unsigned char * temp, unsigned char * a, unsigned char * b );
+         static bool __compare__( ubase_t * a, ubase_t * b );
 
-         static void __multiply3kernel__( unsigned char * res, unsigned char * a, const unsigned char b, const int ib );
+         /********
+          *  IO  *
+          ********/
 
          static const char __conversion__[ 16 ];
 
-         static unsigned char __convert_c2i__( const char c );
+         static ubase_t __convert_c2i__( const char c );
 
-         static char __convert_i2c__( const unsigned char c );
+         static char __convert_i2c__( const ubase_t c );
 
-         static bool __compare__( unsigned char * a, unsigned char * b );
+         /*************************
+          *  Basic math routines  *
+          *************************/
+
+         // r[ start : ] = a[ start : ] + b[ start : ]
+         static int __add3kernel__( ubase_t * r, ubase_t * a, const int la, ubase_t * b, const int lb, const int start = 0 );
+
+         // r[ : ] = a[ : ] * b[ : ]
+         static int __multiply3kernel__( ubase_t * r, ubase_t * temp, ubase_t * a, const int la, ubase_t * b, const int lb );
+
+         // r[ shift : ] = a[ : ] * b
+         static int __multiply2kernel__( ubase_t * r, ubase_t * a, const int la, const ubase_t b, const int shift );
 
    };
 
