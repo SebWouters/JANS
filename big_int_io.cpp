@@ -57,7 +57,7 @@ void jans::big_int::read( const std::string number, const ubase_t base ){
       assert( digit != 17 );
       if ( digit != __00000000__ ){
          lt   = __multiply2kernel__( temp, shift, ls, digit, 0 );
-         lead = __add3kernel__( data, temp, lt, data, lead, 0 );
+         lead = __add3kernel__( data, temp, lt, data, lead );
       }
       ls = __multiply2kernel__( shift, shift, ls, base, 0 );
    }
