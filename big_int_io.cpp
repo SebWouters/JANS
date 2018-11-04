@@ -56,10 +56,9 @@ void jans::big_int::read( const std::string number, const ubase_t base ){
       const ubase_t digit = __convert_c2i__( number.at( i ) );
       assert( digit != 17 );
       if ( digit != __00000000__ ){
-         lt   = __multiply2kernel__( temp, shift, ls, digit, 0 );
-         lead = __add3kernel__( data, temp, lt, data, lead );
+         lead = __mult2add__( data, lead, shift, ls, digit, 0 );
       }
-      ls = __multiply2kernel__( shift, shift, ls, base, 0 );
+      ls = __mult2set__( shift, shift, ls, base, 0 );
    }
 
 }

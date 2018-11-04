@@ -20,7 +20,7 @@
 #include <assert.h>
 #include "big_int.h"
 
-int jans::big_int::__add3kernel__( ubase_t * r, ubase_t * a, const int la, ubase_t * b, const int lb, const int start ){
+int jans::big_int::__sum3set__( ubase_t * r, ubase_t * a, const int la, ubase_t * b, const int lb, const int start ){
 
    // r[ start : ] = a[ start : ] + b[ start : ]
 
@@ -51,25 +51,23 @@ int jans::big_int::__add3kernel__( ubase_t * r, ubase_t * a, const int la, ubase
 
 }
 
-int jans::big_int::__multiply3kernel__( ubase_t * r, ubase_t * t, ubase_t * a, const int la, ubase_t * b, const int lb ){
+int jans::big_int::__mult3add__( ubase_t * r, ubase_t * t, ubase_t * a, const int la, ubase_t * b, const int lb ){
 
-   // r[ : ] = a[ : ] * b[ : ]
+   // r[ : ] += a[ : ] * b[ : ]
 
    assert( ( la + lb - 2 ) < NUM_BLOCK ); // ia + ib <= la + lb - 2 < NUM_BLOCK: Overflow exception
 
    int lr = 0;
-   int lt = 0;
    for ( int ib = 0; ib < lb; ib++ ){
-      lt = jans::big_int::__multiply2kernel__( t, a, la, b[ ib ], ib );
-      lr = jans::big_int::__add3kernel__( r, t, lt, r, lr, ib );
+      lr = jans::big_int::__mult2add__( r, lr, a, la, b[ ib ], ib );
    }
    return lr;
 
 }
 
-int jans::big_int::__multiply2kernel__( ubase_t * r, ubase_t * a, const int la, const ubase_t b, const int shift ){
+int jans::big_int::__mult2set__( ubase_t * r, ubase_t * a, const int la, const ubase_t b, const int shift ){
 
-   // r[ shift : ] = a[ : ] * b
+   // r[ shift : ] = b * a[ : ]; Safe for "scal" operations when ( shift == 0 )
 
    const int upper = shift + la;
    assert( ( upper - 1 ) < NUM_BLOCK ); // shift + ia <= shift + la - 1 < NUM_BLOCK: Overflow exception
@@ -98,37 +96,43 @@ int jans::big_int::__multiply2kernel__( ubase_t * r, ubase_t * a, const int la, 
 
 }
 
-/*int jans::big_int::__daxpy2kernel__( ubase_t * r, const int lr, ubase_t * a, const int la, const ubase_t b, const int shift ){
+int jans::big_int::__mult2add__( ubase_t * r, const int lr, ubase_t * a, const int la, const ubase_t b, const int shift ){
 
-   const int upper = shift + la
+   // r[ shift : ] += b * a[ : ]; This would be lapack "axpy" with a shift
+
+   const int upper = shift + la;
    assert( ( upper - 1 ) < NUM_BLOCK ); // shift + ia <= shift + la - 1 < NUM_BLOCK: Overflow exception
 
-   ucarry_t z = 0;
+   ucarry_t w = 0;
+   ucarry_t x = 0;
    ucarry_t y = b;
+   ucarry_t z = 0;
 
    for ( int ia = 0; ia < la; ia++ ){
-      ucarry_t w = r[ shift + ia ];
-      ucarry_t x = a[ ia ];
+      w = r[ shift + ia ];
+      x = a[ ia ];
       z = z + w + ( x * y );
       r[ shift + ia ] = z & __11111111__;
       z = z >> BLOCK_BIT;
    }
 
-   if ( z != 0 ){
-      if ( upper < NUM_BLOCK ){
-         if ( lr <= upper ){ // r[ upper ] == 0
-            r[ upper ] = z & __11111111__;
-            return ( upper + 1 );
-         } else { // r[ upper ] != 0
-            // dump carry
-         }
-      } else {
-         assert( false ); // Overflow exception
-      }
+   if ( z == 0 ){ return ( ( upper > lr ) ? upper : lr ); }
+
+   int ir = upper;
+   while ( ( ir < NUM_BLOCK ) && ( z != 0 ) ){
+      w = r[ ir ];
+      z = z + w;
+      r[ ir ] = z & __11111111__;
+      z = z >> BLOCK_BIT;
+      ir++;
    }
 
-   return upper;
+   if ( z != 0 ){ // Then while loop stopped because ( ir == NUM_BLOCK )
+      assert( false );
+   }
 
-}*/
+   return ( ( ir > lr ) ? ir : lr );
+
+}
 
 
