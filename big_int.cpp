@@ -28,8 +28,6 @@
 TODO:
 
  * multiplication itf & test (e.g. prime factors RSA-100)
- * addition itf & test
- * subtraction itf & test
 
  * bin to str(dec)
  * modulo
@@ -77,6 +75,44 @@ int jans::big_int::__compare__( ubase_t * a, ubase_t * b ){
       if ( a[ i ] < b[ i ] ){ return ( -i - 1 ); }
    }
    return 0;
+
+}
+
+void jans::big_int::diff( big_int & res, big_int & a, big_int & b ){
+
+   const int comp = __compare__( a.data, b.data );
+
+   if ( ( a.sign == true  ) && ( b.sign == true  ) ){
+      if ( comp == 0 ){ res.sign = true;  res.lead = 0; __clear__( res.data ); }
+      if ( comp >  0 ){ res.sign = true;  res.lead = __diff3set__( res.data, a.data, b.data ); } // a - b =   ( |a| - |b| )
+      if ( comp <  0 ){ res.sign = false; res.lead = __diff3set__( res.data, b.data, a.data ); } // a - b = - ( |b| - |a| )
+   }
+   if ( ( a.sign == false ) && ( b.sign == false ) ){
+      if ( comp == 0 ){ res.sign = true;  res.lead = 0; __clear__( res.data ); }
+      if ( comp >  0 ){ res.sign = false; res.lead = __diff3set__( res.data, a.data, b.data ); } // a - b = - ( |a| - |b| )
+      if ( comp <  0 ){ res.sign = true;  res.lead = __diff3set__( res.data, b.data, a.data ); } // a - b =   ( |b| - |a| )
+   }
+   if ( ( a.sign == true  ) && ( b.sign == false ) ){ res.sign = true;  res.lead = __sum3set__( res.data, a.data, a.lead, b.data, b.lead, 0 ); }
+   if ( ( a.sign == false ) && ( b.sign == true  ) ){ res.sign = false; res.lead = __sum3set__( res.data, a.data, a.lead, b.data, b.lead, 0 ); }
+
+}
+
+void jans::big_int::sum( big_int & res, big_int & a, big_int & b ){
+
+   const int comp = __compare__( a.data, b.data );
+
+   if ( ( a.sign == true  ) && ( b.sign == false ) ){
+      if ( comp == 0 ){ res.sign = true;  res.lead = 0; __clear__( res.data ); }
+      if ( comp >  0 ){ res.sign = true;  res.lead = __diff3set__( res.data, a.data, b.data ); } // a + b =   ( |a| - |b| )
+      if ( comp <  0 ){ res.sign = false; res.lead = __diff3set__( res.data, b.data, a.data ); } // a + b = - ( |b| - |a| )
+   }
+   if ( ( a.sign == false ) && ( b.sign == true  ) ){
+      if ( comp == 0 ){ res.sign = true;  res.lead = 0; __clear__( res.data ); }
+      if ( comp >  0 ){ res.sign = false; res.lead = __diff3set__( res.data, a.data, b.data ); } // a - b = - ( |a| - |b| )
+      if ( comp <  0 ){ res.sign = true;  res.lead = __diff3set__( res.data, b.data, a.data ); } // a - b =   ( |b| - |a| )
+   }
+   if ( ( a.sign == true  ) && ( b.sign == true  ) ){ res.sign = true;  res.lead = __sum3set__( res.data, a.data, a.lead, b.data, b.lead, 0 ); }
+   if ( ( a.sign == false ) && ( b.sign == false ) ){ res.sign = false; res.lead = __sum3set__( res.data, a.data, a.lead, b.data, b.lead, 0 ); }
 
 }
 

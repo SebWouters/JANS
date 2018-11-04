@@ -52,6 +52,10 @@ namespace jans{
 
          static int n_blocks(){ return NUM_BLOCK; }
 
+         static void sum( big_int & res, big_int & a, big_int & b );
+
+         static void diff( big_int & res, big_int & a, big_int & b );
+
          static void sanity_check();
 
          void read( const std::string number, const ubase_t base );

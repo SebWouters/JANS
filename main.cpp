@@ -54,11 +54,35 @@ void test1(){
 
 }
 
+void test2(){
+
+   std::string rsa_100_q_dec = "40094690950920881030683735292761468389214899724061";
+   std::string rsa_100_p_dec = "37975227936943673922808872755445627854565536638199";
+   std::string str_sum       = "78069918887864554953492608048207096243780436362260";
+   std::string str_diff      =  "2119463013977207107874862537315840534649363085862";
+   jans::big_int q;   q.read( rsa_100_q_dec, 10 );
+   jans::big_int p;   p.read( rsa_100_p_dec, 10 );
+   jans::big_int s1; s1.read( str_sum,       10 );
+   jans::big_int d1; d1.read( str_diff,      10 );
+   jans::big_int s2;
+   jans::big_int d2;
+
+   jans::big_int::diff( d2, q, p );
+   jans::big_int::sum(  s2, q, p );
+   const bool eq_sum  = jans::big_int::equal( s1, s2 );
+   const bool eq_diff = jans::big_int::equal( d1, d2 );
+
+   std::cout << "Equal(sum)  = " << eq_sum  << std::endl;
+   std::cout << "Equal(diff) = " << eq_diff << std::endl;
+
+}
+
 int main()
 {
 
    jans::big_int::sanity_check();
    test1();
+   test2();
 
    return 0;
 
