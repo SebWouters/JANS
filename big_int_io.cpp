@@ -86,6 +86,24 @@ std::string jans::big_int::write( const ubase_t base ){
 
    }
 
+   /*std::string reduction;
+   ubase_t div[ NUM_BLOCK ]; __clear__( div ); int ld  = 1; div[ 0 ] = base;
+   ubase_t nu1[ NUM_BLOCK ]; __clear__( nu1 ); int ln1 = 0;
+   //ubase_t nu2[ NUM_BLOCK ]; __clear__( nu2 ); int ln2 = 0;
+   ubase_t rem[ NUM_BLOCK ]; __clear__( rem ); int lr  = lead;
+   ubase_t tem[ NUM_BLOCK ]; __clear__( tem );
+
+   for ( int i = 0; i < lr; i++ ){ rem[ i ] = data[ i ]; }
+
+   while ( ( ( lr > 0 ) || ( rem[ 0 ] != 0 ) ) ){
+      char digit;
+      __divide__( nu1, ln1, tem, rem, lr,  div, ld );   digit = __convert_i2c__( rem[ 0 ] );   reduction.push_back( digit );
+      __divide__( rem, lr,  tem, nu1, ln1, div, ld );   digit = __convert_i2c__( rem[ 0 ] );   reduction.push_back( digit );
+   }
+
+   return reduction;*/
+   
+
    // TODO: DEC
 
    return "error";

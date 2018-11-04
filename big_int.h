@@ -46,7 +46,7 @@ namespace jans{
 
          virtual ~big_int();
 
-         static bool compare( big_int & n1, big_int & n2 );
+         static bool equal( big_int & n1, big_int & n2 );
 
          static int n_bits(){ return ( NUM_BLOCK * BLOCK_BIT ); }
 
@@ -68,7 +68,7 @@ namespace jans{
 
          static void __clear__( ubase_t * a );
 
-         static bool __compare__( ubase_t * a, ubase_t * b );
+         static int __compare__( ubase_t * a, ubase_t * b );
 
          /********
           *  IO  *
@@ -87,14 +87,23 @@ namespace jans{
          // r[ start : ] = a[ start : ] + b[ start : ]
          static int __sum3set__( ubase_t * r, ubase_t * a, const int la, ubase_t * b, const int lb, const int start = 0 );
 
+         // r[ : ] = a[ : ] - b[ : ]; safe to set one of a or b equal to r; requires a >= b
+         static int __diff3set__( ubase_t * r, ubase_t * a, ubase_t * b );
+
          // r[ : ] += a[ : ] * b[ : ]
-         static int __mult3add__( ubase_t * r, ubase_t * t, ubase_t * a, const int la, ubase_t * b, const int lb );
+         static int __mult3add__( ubase_t * r, ubase_t * a, const int la, ubase_t * b, const int lb );
 
          // r[ shift : ]  = b * a[ : ]; Safe for "scal" operations when ( shift == 0 )
          static int __mult2set__( ubase_t * r, ubase_t * a, const int la, const ubase_t b, const int shift = 0 );
 
          // r[ shift : ] += b * a[ : ]; This would be lapack "axpy" with a shift
          static int __mult2add__( ubase_t * r, const int lr, ubase_t * a, const int la, const ubase_t b, const int shift = 0 );
+
+         // returns q_guess
+         //static ubase_t __div_helper__( const ubase_t n1, const ubase_t n0, const ubase_t d0 );
+
+         // Solves for n = q * d + r, with r < d, whereby initially (r, lr) contains (n, ln). temp is a temporary work array.
+         //static void __divide__( ubase_t * q, int & lq, ubase_t * temp, ubase_t * r, int & lr, ubase_t * d, const int ld );
 
    };
 

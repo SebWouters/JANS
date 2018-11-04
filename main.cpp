@@ -39,8 +39,8 @@ void test1(){
    jans::big_int n2; n2.read( rsa_100_n_dec, 10 );
    jans::big_int n3; n3.read( rsa_100_n_hex, 16 );
 
-   const bool equal12 = jans::big_int::compare( n1, n2 );
-   const bool equal13 = jans::big_int::compare( n1, n3 );
+   const bool equal12 = jans::big_int::equal( n1, n2 );
+   const bool equal13 = jans::big_int::equal( n1, n3 );
 
    std::string n_bin = n3.write( 2  ); const bool equal_bin = ( n_bin.compare( rsa_100_n_bin ) == 0 );
    std::string n_hex = n2.write( 16 ); const bool equal_hex = ( n_hex.compare( rsa_100_n_hex ) == 0 );
@@ -48,6 +48,9 @@ void test1(){
    std::cout << "Equal(n1,n3) = " << equal13 << std::endl;
    std::cout << "Equal(bin)   = " << equal_bin << std::endl;
    std::cout << "Equal(hex)   = " << equal_hex << std::endl;
+   //std::string n_dec = n1.write( 10 );
+   //std::cout << "n (as given)   = " << rsa_100_n_dec << std::endl;
+   //std::cout << "n (as written) = " << n_dec << std::endl; 
 
 }
 

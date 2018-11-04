@@ -29,10 +29,11 @@ TODO:
 
  * multiplication itf & test (e.g. prime factors RSA-100)
  * addition itf & test
+ * subtraction itf & test
+
  * bin to str(dec)
  * modulo
  * division
- * subtraction
  * gcd (Euclidean algorithm)
  * modular addition / subtraction
  * modular multiplication (Kochanski, Montgomery)
@@ -63,18 +64,19 @@ void jans::big_int::__clear__( ubase_t * a ){
 
 }
 
-bool jans::big_int::compare( big_int & n1, big_int & n2 ){
+bool jans::big_int::equal( big_int & n1, big_int & n2 ){
 
-   return ( ( n1.sign == n2.sign ) & __compare__( n1.data, n2.data ) );
+   return ( ( n1.sign == n2.sign ) && ( n1.lead == n2.lead ) && ( __compare__( n1.data, n2.data ) == 0 ) );
 
 }
 
-bool jans::big_int::__compare__( ubase_t * a, ubase_t * b ){
+int jans::big_int::__compare__( ubase_t * a, ubase_t * b ){
 
-   for ( int i = 0; i < NUM_BLOCK; i++ ){
-      if ( a[ i ] != b[ i ] ){ return false; }
+   for ( int i = NUM_BLOCK - 1; i >= 0; i-- ){
+      if ( a[ i ] > b[ i ] ){ return (  i + 1 ); }
+      if ( a[ i ] < b[ i ] ){ return ( -i - 1 ); }
    }
-   return true;
+   return 0;
 
 }
 
