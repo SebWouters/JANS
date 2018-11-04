@@ -91,7 +91,7 @@ namespace jans{
          static int __mult3add__( ubase_t * r, ubase_t * t, ubase_t * a, const int la, ubase_t * b, const int lb );
 
          // r[ shift : ]  = b * a[ : ]; Safe for "scal" operations when ( shift == 0 )
-         static int __mult2set__( ubase_t * r, ubase_t * a, const int la, const ubase_t b, const int shift );
+         static int __mult2set__( ubase_t * r, ubase_t * a, const int la, const ubase_t b, const int shift = 0 );
 
          // r[ shift : ] += b * a[ : ]; This would be lapack "axpy" with a shift
          static int __mult2add__( ubase_t * r, const int lr, ubase_t * a, const int la, const ubase_t b, const int shift = 0 );

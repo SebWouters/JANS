@@ -59,7 +59,7 @@ void jans::big_int::sanity_check(){
 
 void jans::big_int::__clear__( ubase_t * a ){
 
-   for ( int i = 0; i < NUM_BLOCK; i++ ){ a[ i ] &= __00000000__; }
+   for ( int i = 0; i < NUM_BLOCK; i++ ){ a[ i ] = 0; }
 
 }
 

@@ -47,18 +47,16 @@ void jans::big_int::read( const std::string number, const ubase_t base ){
    sign = true;
 
    ubase_t shift[ NUM_BLOCK ]; __clear__( shift );
-   ubase_t temp [ NUM_BLOCK ]; __clear__( temp  );
    shift[ 0 ] = 1;
    int ls = 1;
-   int lt = 0;
 
    for ( int i = number.size() - 1; i >= 0; i-- ){
       const ubase_t digit = __convert_c2i__( number.at( i ) );
       assert( digit != 17 );
       if ( digit != __00000000__ ){
-         lead = __mult2add__( data, lead, shift, ls, digit, 0 );
+         lead = __mult2add__( data, lead, shift, ls, digit );
       }
-      ls = __mult2set__( shift, shift, ls, base, 0 );
+      ls = __mult2set__( shift, shift, ls, base );
    }
 
 }
