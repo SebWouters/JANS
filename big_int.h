@@ -83,9 +83,9 @@ namespace jans{
 
          static void __clear__( ubase_t * a );
 
-         static void __copy__( ubase_t * r, ubase_t * a );
+         static void __copy__( ubase_t * r, const ubase_t * a );
 
-         static int __compare__( ubase_t * a, ubase_t * b );
+         static int __compare__( const ubase_t * a, const ubase_t * b );
 
          static void __shift_up__( ubase_t * a, const int k );
 

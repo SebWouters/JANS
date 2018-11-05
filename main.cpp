@@ -21,7 +21,7 @@
 #include <stdio.h>
 #include <iostream>
 
-void test1(){
+bool test1( const bool print ){
 
    std::string rsa_100_n_bin = "101100100011010101100110101111010001111100100000011010101100110111001001011011010001110010101111100100000101111110001110111111011110101011100001010100001110011010111101110010011011101101001111011111110111110110011001001000100111010001010101011101110000001011011101110001110001111010010100001110111101111100010111100101100011111011";
    std::string rsa_100_p_bin = "110011111101111010100000111010110100110101010001111011000011000000000100110101001011001111101101100110011011110011100011000111100110101010000000111110010010011110111";
@@ -43,14 +43,19 @@ void test1(){
    const bool equal13 = jans::big_int::equal( n1, n3 );
 
    std::string n_bin = n3.write( 2  ); const bool equal_bin = ( n_bin.compare( rsa_100_n_bin ) == 0 );
+   std::string n_dec = n1.write( 10 ); const bool equal_dec = ( n_dec.compare( rsa_100_n_dec ) == 0 );
    std::string n_hex = n2.write( 16 ); const bool equal_hex = ( n_hex.compare( rsa_100_n_hex ) == 0 );
-   std::cout << "Equal(n1,n2) = " << equal12 << std::endl;
-   std::cout << "Equal(n1,n3) = " << equal13 << std::endl;
-   std::cout << "Equal(bin)   = " << equal_bin << std::endl;
-   std::cout << "Equal(hex)   = " << equal_hex << std::endl;
-   //std::string n_dec = n1.write( 10 );
-   //std::cout << "n (as given)   = " << rsa_100_n_dec << std::endl;
-   //std::cout << "n (as written) = " << n_dec << std::endl; 
+
+   if ( print ){
+
+      std::cout << "Test 1: reading and writing of numbers in bin, dec & hex" << std::endl;
+      std::cout << "Equal(n1,n2) = " << equal12 << std::endl;
+      std::cout << "Equal(n1,n3) = " << equal13 << std::endl;
+      std::cout << "Equal(bin)   = " << equal_bin << std::endl;
+      std::cout << "Equal(dec)   = " << equal_dec << std::endl;
+      std::cout << "Equal(hex)   = " << equal_hex << std::endl;
+
+   }
 
 }
 
@@ -89,6 +94,7 @@ bool test2( const bool print ){
 
    if ( print ){
 
+      std::cout << "Test2: Basic math operations: addition, subtraction, multiplication, division, modulo" << std::endl;
       std::cout << "Equal(sum)   = " << eq_sum   << std::endl;
       std::cout << "Equal(diff)  = " << eq_diff  << std::endl;
       std::cout << "Equal(prod)  = " << eq_prod  << std::endl;
@@ -103,32 +109,12 @@ bool test2( const bool print ){
 
 }
 
-void test3(){
-
-   std::string rsa_100_p_bin = "110011111101111010100000111010110100110101010001111011000011000000000100110101001011001111101101100110011011110011100011000111100110101010000000111110010010011110111";
-   jans::big_int p;
-   p.read( rsa_100_p_bin, 2 );
-   for ( int i = 0; i <= 64; i++ ){
-      p.shift_up( i );
-      std::cout << "Up  (" << i << ") = " << p.write( 2 ) << std::endl;
-      p.shift_down( i );
-      std::cout << "Norm(" << i << ") = " << p.write( 2 ) << std::endl;
-   }
-   for ( int i = 0; i <= 64; i++ ){
-      p.shift_down( i );
-      std::cout << "Down(" << i << ") = " << p.write( 2 ) << std::endl;
-      p.shift_up( i );
-      std::cout << "Norm(" << i << ") = " << p.write( 2 ) << std::endl;
-   }
-
-}
-
 int main()
 {
 
    jans::big_int::sanity_check();
-   //test1();
-   test2( true );
+   test1( true );
+   //test2( true );
    //test3();
 
    return 0;

@@ -18,9 +18,10 @@
 */
 
 #include <assert.h>
+//#include <stdio.h>
+//#include <iostream>
+
 #include "big_int.h"
-#include <stdio.h>
-#include <iostream>
 
 int jans::big_int::__sum3set__( ubase_t * r, ubase_t * a, const int la, ubase_t * b, const int lb ){
 
@@ -217,16 +218,9 @@ void jans::big_int::__divide__( ubase_t * q, int & lq, ubase_t * r, int & lr, ub
    assert( lr >= ld );
    assert( ld >= 1  );
 
-   //int jrl = 0; { int j = 0; while( ( j < BLOCK_BIT ) && ( jrl == 0 ) ){ 
    int jrl = 0; for ( int j = 0; j < BLOCK_BIT; j++ ){ if ( ( r[ lr - 1 ] >> j ) & 1U ){ jrl = j; } }
    int jdl = 0; for ( int j = 0; j < BLOCK_BIT; j++ ){ if ( ( d[ ld - 1 ] >> j ) & 1U ){ jdl = j; } }
    const int shift_bit = ( lr - ld ) * BLOCK_BIT + ( jrl - jdl );
-
-   std::cout << "lr  = " << lr << std::endl;
-   std::cout << "ld  = " << ld << std::endl;
-   std::cout << "jrl = " << jrl << std::endl;
-   std::cout << "jdl = " << jdl << std::endl;
-   std::cout << "shift_bit = " << shift_bit << std::endl;
 
    assert( shift_bit >= 0 );
 

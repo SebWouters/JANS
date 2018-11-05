@@ -25,13 +25,13 @@ void jans::big_int::__clear__( ubase_t * a ){
 
 }
 
-void jans::big_int::__copy__( ubase_t * r, ubase_t * a ){
+void jans::big_int::__copy__( ubase_t * r, const ubase_t * a ){
 
    for ( int i = 0; i < NUM_BLOCK; i++ ){ r[ i ] = a[ i ]; }
 
 }
 
-int jans::big_int::__compare__( ubase_t * a, ubase_t * b ){
+int jans::big_int::__compare__( const ubase_t * a, const ubase_t * b ){
 
    for ( int i = NUM_BLOCK - 1; i >= 0; i-- ){
       if ( a[ i ] > b[ i ] ){ return (  i + 1 ); }

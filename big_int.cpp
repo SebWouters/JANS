@@ -27,11 +27,7 @@
 
 TODO:
 
- * multiplication itf & test (e.g. prime factors RSA-100)
-
- * bin to str(dec)
- * modulo
- * division
+ * division & modulo: faster
  * gcd (Euclidean algorithm)
  * modular addition / subtraction
  * modular multiplication (Kochanski, Montgomery)
