@@ -56,25 +56,9 @@ void jans::big_int::sanity_check(){
 
 }
 
-void jans::big_int::__clear__( ubase_t * a ){
-
-   for ( int i = 0; i < NUM_BLOCK; i++ ){ a[ i ] = 0; }
-
-}
-
 bool jans::big_int::equal( big_int & n1, big_int & n2 ){
 
    return ( ( n1.sign == n2.sign ) && ( n1.lead == n2.lead ) && ( __compare__( n1.data, n2.data ) == 0 ) );
-
-}
-
-int jans::big_int::__compare__( ubase_t * a, ubase_t * b ){
-
-   for ( int i = NUM_BLOCK - 1; i >= 0; i-- ){
-      if ( a[ i ] > b[ i ] ){ return (  i + 1 ); }
-      if ( a[ i ] < b[ i ] ){ return ( -i - 1 ); }
-   }
-   return 0;
 
 }
 
@@ -92,8 +76,8 @@ void jans::big_int::diff( big_int & res, big_int & a, big_int & b ){
       if ( comp >  0 ){ res.sign = false; res.lead = __diff3set__( res.data, a.data, b.data ); } // a - b = - ( |a| - |b| )
       if ( comp <  0 ){ res.sign = true;  res.lead = __diff3set__( res.data, b.data, a.data ); } // a - b =   ( |b| - |a| )
    }
-   if ( ( a.sign == true  ) && ( b.sign == false ) ){ res.sign = true;  res.lead = __sum3set__( res.data, a.data, a.lead, b.data, b.lead, 0 ); }
-   if ( ( a.sign == false ) && ( b.sign == true  ) ){ res.sign = false; res.lead = __sum3set__( res.data, a.data, a.lead, b.data, b.lead, 0 ); }
+   if ( ( a.sign == true  ) && ( b.sign == false ) ){ res.sign = true;  res.lead = __sum3set__( res.data, a.data, a.lead, b.data, b.lead ); }
+   if ( ( a.sign == false ) && ( b.sign == true  ) ){ res.sign = false; res.lead = __sum3set__( res.data, a.data, a.lead, b.data, b.lead ); }
 
 }
 
@@ -108,11 +92,47 @@ void jans::big_int::sum( big_int & res, big_int & a, big_int & b ){
    }
    if ( ( a.sign == false ) && ( b.sign == true  ) ){
       if ( comp == 0 ){ res.sign = true;  res.lead = 0; __clear__( res.data ); }
-      if ( comp >  0 ){ res.sign = false; res.lead = __diff3set__( res.data, a.data, b.data ); } // a - b = - ( |a| - |b| )
-      if ( comp <  0 ){ res.sign = true;  res.lead = __diff3set__( res.data, b.data, a.data ); } // a - b =   ( |b| - |a| )
+      if ( comp >  0 ){ res.sign = false; res.lead = __diff3set__( res.data, a.data, b.data ); } // a + b = - ( |a| - |b| )
+      if ( comp <  0 ){ res.sign = true;  res.lead = __diff3set__( res.data, b.data, a.data ); } // a + b =   ( |b| - |a| )
    }
-   if ( ( a.sign == true  ) && ( b.sign == true  ) ){ res.sign = true;  res.lead = __sum3set__( res.data, a.data, a.lead, b.data, b.lead, 0 ); }
-   if ( ( a.sign == false ) && ( b.sign == false ) ){ res.sign = false; res.lead = __sum3set__( res.data, a.data, a.lead, b.data, b.lead, 0 ); }
+   if ( ( a.sign == true  ) && ( b.sign == true  ) ){ res.sign = true;  res.lead = __sum3set__( res.data, a.data, a.lead, b.data, b.lead ); }
+   if ( ( a.sign == false ) && ( b.sign == false ) ){ res.sign = false; res.lead = __sum3set__( res.data, a.data, a.lead, b.data, b.lead ); }
+
+}
+
+void jans::big_int::prod( big_int & res, big_int & a, big_int & b ){
+
+   res.sign = !( a.sign != b.sign );
+   res.lead = __mult3set__( res.data, a.data, a.lead, b.data, b.lead );
+
+}
+
+void jans::big_int::div( big_int & q, big_int & r, big_int & n, big_int & d ){
+
+   // 0 <= r < d
+
+   assert( d.sign == true );
+
+   int lq = 0;
+   int lr = n.lead;
+   __copy__( r.data, n.data );
+   __divide__( q.data, lq, r.data, lr, d.data, d.lead );
+   q.sign = true;
+   r.sign = true;
+
+   if ( n.sign == false ){
+
+      // - |n| = - d * ( return( q ) + 1 ) + ( d - return( r ) )
+      if ( lr > 0 ){
+         lr = __diff3set__( r.data, d.data, r.data );
+         lq = __plus_one__( q.data, lq );
+      }
+      q.sign = ( ( lq > 0 ) ? false : true );
+
+   }
+
+   q.lead = lq;
+   r.lead = lr;
 
 }
 
@@ -132,49 +152,6 @@ void jans::big_int::shift_down( const int k ){
 
 }
 
-void jans::big_int::__shift_up__( ubase_t * a, const int k ){
-
-   const int blk = k / BLOCK_BIT;
-   const int bit = k % BLOCK_BIT;
-
-   if ( blk > 0 ){
-      for ( int i = NUM_BLOCK - 1; i >= blk; i-- ){ a[ i ] = a[ i - blk ]; }
-      for ( int i = blk - 1;       i >= 0;   i-- ){ a[ i ] = 0;            }
-   }
-
-   if ( bit > 0 ){
-      for ( int i = NUM_BLOCK - 1; i > blk; i-- )      //  del bit               set bit       in case bit is present downward
-      {  for ( int j = BLOCK_BIT - 1; j >= bit; j-- ){ a[  i  ] &= ~( 1U << j ); a[  i  ] |= ( ( ( a[   i   ] >> (             j - bit ) ) & 1U ) << j ); }
-         for ( int j =       bit - 1; j >= 0;   j-- ){ a[  i  ] &= ~( 1U << j ); a[  i  ] |= ( ( ( a[ i - 1 ] >> ( BLOCK_BIT + j - bit ) ) & 1U ) << j ); }
-      }{ for ( int j = BLOCK_BIT - 1; j >= bit; j-- ){ a[ blk ] &= ~( 1U << j ); a[ blk ] |= ( ( ( a[  blk  ] >> (             j - bit ) ) & 1U ) << j ); }
-         for ( int j =       bit - 1; j >= 0;   j-- ){ a[ blk ] &= ~( 1U << j ); }
-      }
-   }
-
-}
-
-void jans::big_int::__shift_down__( ubase_t * a, const int k ){
-
-   const int blk = k / BLOCK_BIT;
-   const int bit = k % BLOCK_BIT;
-   const int upi = NUM_BLOCK - blk - 1;
-   const int upj = BLOCK_BIT - bit;
-
-   if ( blk > 0 ){
-      for ( int i = 0;       i <= upi;      i++ ){ a[ i ] = a[ i + blk ]; }
-      for ( int i = upi + 1; i < NUM_BLOCK; i++ ){ a[ i ] = 0;            }
-   }
-
-   if ( bit > 0 ){
-      for ( int i = 0; i < upi; i++ ) //          del bit                   set bit       in case bit is present upward
-      {  for ( int j = 0;   j < upj;       j++ ){ a[  i  ] &= ~( 1U << j ); a[  i  ] |= ( ( ( a[   i   ] >> ( j + bit ) ) & 1U ) << j ); }
-         for ( int j = upj; j < BLOCK_BIT; j++ ){ a[  i  ] &= ~( 1U << j ); a[  i  ] |= ( ( ( a[ i + 1 ] >> ( j - upj ) ) & 1U ) << j ); }
-      }{ for ( int j = 0;   j < upj;       j++ ){ a[ upi ] &= ~( 1U << j ); a[ upi ] |= ( ( ( a[  upi  ] >> ( j + bit ) ) & 1U ) << j ); }
-         for ( int j = upj; j < BLOCK_BIT; j++ ){ a[ upi ] &= ~( 1U << j ); }
-      }
-   }
-
-}
 
 
 

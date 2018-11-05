@@ -18,8 +18,8 @@
 */
 
 #include <assert.h>
-//#include <stdio.h>
-//#include <iostream>
+#include <stdio.h>
+#include <iostream>
 
 #include "big_int.h"
 
@@ -46,32 +46,35 @@ void jans::big_int::read( const std::string number, const ubase_t base ){
    lead = 0;
    sign = true;
 
-   ubase_t shift[ NUM_BLOCK ]; __clear__( shift );
+   ubase_t shift[ NUM_BLOCK ];
+   __clear__( shift );
    shift[ 0 ] = 1;
    int ls = 1;
 
    for ( int i = number.size() - 1; i >= 0; i-- ){
       const ubase_t digit = __convert_c2i__( number.at( i ) );
       assert( digit != 17 );
-      if ( digit != __00000000__ ){
+      if ( digit != 0 ){
          lead = __mult2add__( data, lead, shift, ls, digit );
       }
-      ls = __mult2set__( shift, shift, ls, base );
+      ls = __scal1__( shift, ls, base );
    }
 
 }
 
-std::string jans::big_int::write( const ubase_t base ){
+std::string jans::big_int::write( const ubase_t base ) const{
 
    assert( ( base == 2 ) || ( base == 10 ) || ( base == 16 ) );
+
+   if ( lead == 0 ){ return "0"; }
 
    if ( ( base == 2 ) || ( base == 16 ) ){
 
       const int log2base  = ( ( base == 2 ) ? 1 : 4 );
-      const int text_size = n_bits() / log2base;
+      const int text_size = ( lead * BLOCK_BIT ) / log2base;
       char text[ text_size ];
 
-      for ( int i = 0; i < NUM_BLOCK; i++ ){
+      for ( int i = 0; i < lead; i++ ){
          for ( int j = 0; j < ( BLOCK_BIT / log2base ); j++ ){
             text[ text_size - 1 - ( ( BLOCK_BIT / log2base ) * i + j ) ]
                = __conversion__[ ( ( data[ i ] & ( ( base - 1 ) << ( log2base * j ) ) ) >> ( log2base * j ) ) ];

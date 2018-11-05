@@ -29,12 +29,11 @@
 #define BLOCK_BIT ( sizeof(unsigned int) * CHAR_BIT )
 #define NUM_BLOCK ( 1024 / BLOCK_BIT )
 
-#define __00000000__ (  ((unsigned int)(0)) )
 #define __11111111__ ( ~((unsigned int)(0)) )
 
-#define SET_BIT(A,k) (   A[ ( ( k ) / ( sizeof(unsigned int) * CHAR_BIT ) ) ] |=  ( 1U << ( ( k ) % ( sizeof(unsigned int) * CHAR_BIT ) ) ) )
-#define DEL_BIT(A,k) (   A[ ( ( k ) / ( sizeof(unsigned int) * CHAR_BIT ) ) ] &= ~( 1U << ( ( k ) % ( sizeof(unsigned int) * CHAR_BIT ) ) ) )
-#define GET_BIT(A,k) ( ( A[ ( ( k ) / ( sizeof(unsigned int) * CHAR_BIT ) ) ] >>          ( ( k ) % ( sizeof(unsigned int) * CHAR_BIT ) ) ) & 1U )
+//#define SET_BIT(A,k) (   A[ ( ( k ) / ( sizeof(unsigned int) * CHAR_BIT ) ) ] |=  ( 1U << ( ( k ) % ( sizeof(unsigned int) * CHAR_BIT ) ) ) )
+//#define DEL_BIT(A,k) (   A[ ( ( k ) / ( sizeof(unsigned int) * CHAR_BIT ) ) ] &= ~( 1U << ( ( k ) % ( sizeof(unsigned int) * CHAR_BIT ) ) ) )
+//#define GET_BIT(A,k) ( ( A[ ( ( k ) / ( sizeof(unsigned int) * CHAR_BIT ) ) ] >>          ( ( k ) % ( sizeof(unsigned int) * CHAR_BIT ) ) ) & 1U )
 
 namespace jans{
 
@@ -56,6 +55,10 @@ namespace jans{
 
          static void diff( big_int & res, big_int & a, big_int & b );
 
+         static void prod( big_int & res, big_int & a, big_int & b );
+
+         static void div( big_int & q, big_int & r, big_int & n, big_int & d );
+
          void shift_up( const int k );
 
          void shift_down( const int k );
@@ -64,7 +67,7 @@ namespace jans{
 
          void read( const std::string number, const ubase_t base );
 
-         std::string write( const ubase_t base );
+         std::string write( const ubase_t base ) const;
 
       private:
 
@@ -74,7 +77,13 @@ namespace jans{
 
          int lead; // Upper bound for loops over the blocks: lead = 1 + max{i}( data[ i ] != 0 )
 
+         /******************************
+          *  Private static functions  *
+          ******************************/
+
          static void __clear__( ubase_t * a );
+
+         static void __copy__( ubase_t * r, ubase_t * a );
 
          static int __compare__( ubase_t * a, ubase_t * b );
 
@@ -96,26 +105,32 @@ namespace jans{
           *  Basic math routines  *
           *************************/
 
-         // r[ start : ] = a[ start : ] + b[ start : ]
-         static int __sum3set__( ubase_t * r, ubase_t * a, const int la, ubase_t * b, const int lb, const int start = 0 );
+         // r = a + b; if (( r != a ) && ( r != b )){ __clear__( r ); }
+         static int __sum3set__( ubase_t * r, ubase_t * a, const int la, ubase_t * b, const int lb );
 
-         // r[ : ] = a[ : ] - b[ : ]; safe to set one of a or b equal to r; requires a >= b
+         // r++
+         static int __plus_one__( ubase_t * r, const int lr );
+
+         // r = a - b
          static int __diff3set__( ubase_t * r, ubase_t * a, ubase_t * b );
 
-         // r[ : ] += a[ : ] * b[ : ]
-         static int __mult3add__( ubase_t * r, ubase_t * a, const int la, ubase_t * b, const int lb );
+         // r = a * b; calls __clear__( r )
+         static int __mult3set__( ubase_t * r, ubase_t * a, const int la, ubase_t * b, const int lb );
 
-         // r[ shift : ]  = b * a[ : ]; Safe for "scal" operations when ( shift == 0 )
-         static int __mult2set__( ubase_t * r, ubase_t * a, const int la, const ubase_t b, const int shift = 0 );
+         // r += a * b
+         static int __mult3add__( ubase_t * r, const int lr, ubase_t * a, const int la, ubase_t * b, const int lb );
 
-         // r[ shift : ] += b * a[ : ]; This would be lapack "axpy" with a shift
+         // r = a * b; calls __clear__( r )
+         static int __mult2set__( ubase_t * r, ubase_t * a, const int la, const ubase_t b );
+
+         // r[ shift : ] += b * a[ : ]; this would be lapack "axpy" with a shift
          static int __mult2add__( ubase_t * r, const int lr, ubase_t * a, const int la, const ubase_t b, const int shift = 0 );
 
-         // returns q_guess
-         //static ubase_t __div_helper__( const ubase_t n1, const ubase_t n0, const ubase_t d0 );
+         // r = r * b
+         static int __scal1__( ubase_t * r, const int lr, const ubase_t b );
 
-         // Solves for n = q * d + r, with r < d, whereby initially (r, lr) contains (n, ln). temp is a temporary work array.
-         //static void __divide__( ubase_t * q, int & lq, ubase_t * temp, ubase_t * r, int & lr, ubase_t * d, const int ld );
+         // Solves for n = q * d + r, with r < d; whereby initially (r, lr) contains (n, ln).
+         static void __divide__( ubase_t * q, int & lq, ubase_t * r, int & lr, ubase_t * d, const int ld );
 
    };
 

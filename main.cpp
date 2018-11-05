@@ -54,26 +54,52 @@ void test1(){
 
 }
 
-void test2(){
+bool test2( const bool print ){
 
+   std::string rsa_100_n_dec = "1522605027922533360535618378132637429718068114961380688657908494580122963258952897654000350692006139";
    std::string rsa_100_q_dec = "40094690950920881030683735292761468389214899724061";
    std::string rsa_100_p_dec = "37975227936943673922808872755445627854565536638199";
    std::string str_sum       = "78069918887864554953492608048207096243780436362260";
    std::string str_diff      =  "2119463013977207107874862537315840534649363085862";
-   jans::big_int q;   q.read( rsa_100_q_dec, 10 );
-   jans::big_int p;   p.read( rsa_100_p_dec, 10 );
-   jans::big_int s1; s1.read( str_sum,       10 );
-   jans::big_int d1; d1.read( str_diff,      10 );
-   jans::big_int s2;
-   jans::big_int d2;
+   std::string str_quot_n_s  = "19503094784939146331495321820061269240767748307052";
+   std::string str_rem_n_s   = "65185044735636719643690537913604470077414307348619";
 
-   jans::big_int::diff( d2, q, p );
-   jans::big_int::sum(  s2, q, p );
-   const bool eq_sum  = jans::big_int::equal( s1, s2 );
-   const bool eq_diff = jans::big_int::equal( d1, d2 );
+   jans::big_int n; n.read( rsa_100_n_dec, 10 );
+   jans::big_int q; q.read( rsa_100_q_dec, 10 );
+   jans::big_int p; p.read( rsa_100_p_dec, 10 );
+   jans::big_int s; s.read( str_sum,       10 );
+   jans::big_int d; d.read( str_diff,      10 );
+   jans::big_int x; x.read( str_quot_n_s,  10 );
+   jans::big_int y; y.read( str_rem_n_s,   10 );
+   jans::big_int z; // Initializes to zero
 
-   std::cout << "Equal(sum)  = " << eq_sum  << std::endl;
-   std::cout << "Equal(diff) = " << eq_diff << std::endl;
+   jans::big_int sum;
+   jans::big_int diff;
+   jans::big_int prod;
+   jans::big_int quot;
+   jans::big_int rem;
+
+   jans::big_int::sum(   sum,      p, q ); const bool eq_sum   = jans::big_int::equal(  sum, s );
+   jans::big_int::diff( diff,      q, p ); const bool eq_diff  = jans::big_int::equal( diff, d );
+   jans::big_int::prod( prod,      p, q ); const bool eq_prod  = jans::big_int::equal( prod, n );
+   jans::big_int::div(  quot, rem, n, p ); const bool eq_quot1 = jans::big_int::equal( quot, q );
+                                           const bool eq_rem1  = jans::big_int::equal(  rem, z );
+   jans::big_int::div(  quot, rem, n, s ); const bool eq_quot2 = jans::big_int::equal( quot, x );
+                                           const bool eq_rem2  = jans::big_int::equal(  rem, y );
+
+   if ( print ){
+
+      std::cout << "Equal(sum)   = " << eq_sum   << std::endl;
+      std::cout << "Equal(diff)  = " << eq_diff  << std::endl;
+      std::cout << "Equal(prod)  = " << eq_prod  << std::endl;
+      std::cout << "Equal(quot1) = " << eq_quot1 << std::endl;
+      std::cout << "Equal(rem1)  = " << eq_rem1  << std::endl;
+      std::cout << "Equal(quot2) = " << eq_quot2 << std::endl;
+      std::cout << "Equal(rem2)  = " << eq_rem2  << std::endl;
+
+   }
+
+   return ( eq_sum && eq_diff && eq_prod && eq_quot1 && eq_rem1 && eq_quot2 && eq_rem2 );
 
 }
 
@@ -102,8 +128,8 @@ int main()
 
    jans::big_int::sanity_check();
    //test1();
-   //test2();
-   test3();
+   test2( true );
+   //test3();
 
    return 0;
 
