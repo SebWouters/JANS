@@ -82,11 +82,17 @@ void test3(){
    std::string rsa_100_p_bin = "110011111101111010100000111010110100110101010001111011000011000000000100110101001011001111101101100110011011110011100011000111100110101010000000111110010010011110111";
    jans::big_int p;
    p.read( rsa_100_p_bin, 2 );
-   for ( int i = 0; i < 100; i++ ){
+   for ( int i = 0; i <= 64; i++ ){
       p.shift_up( i );
-      std::cout << "Up (" << i << ") = " << p.write( 2 ) << std::endl;
+      std::cout << "Up  (" << i << ") = " << p.write( 2 ) << std::endl;
       p.shift_down( i );
-      std::cout << "Nor(" << i << ") = " << p.write( 2 ) << std::endl;
+      std::cout << "Norm(" << i << ") = " << p.write( 2 ) << std::endl;
+   }
+   for ( int i = 0; i <= 64; i++ ){
+      p.shift_down( i );
+      std::cout << "Down(" << i << ") = " << p.write( 2 ) << std::endl;
+      p.shift_up( i );
+      std::cout << "Norm(" << i << ") = " << p.write( 2 ) << std::endl;
    }
 
 }

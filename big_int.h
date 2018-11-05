@@ -32,9 +32,9 @@
 #define __00000000__ (  ((unsigned int)(0)) )
 #define __11111111__ ( ~((unsigned int)(0)) )
 
-#define SET_BIT(A,k) ( A[ ( ( k ) / ( sizeof(unsigned int) * CHAR_BIT ) ) ] |=  ( 1 << ( ( k ) % ( sizeof(unsigned int) * CHAR_BIT ) ) ) )
-#define DEL_BIT(A,k) ( A[ ( ( k ) / ( sizeof(unsigned int) * CHAR_BIT ) ) ] &= ~( 1 << ( ( k ) % ( sizeof(unsigned int) * CHAR_BIT ) ) ) )
-#define GET_BIT(A,k) ( A[ ( ( k ) / ( sizeof(unsigned int) * CHAR_BIT ) ) ] &   ( 1 << ( ( k ) % ( sizeof(unsigned int) * CHAR_BIT ) ) ) )
+#define SET_BIT(A,k) (   A[ ( ( k ) / ( sizeof(unsigned int) * CHAR_BIT ) ) ] |=  ( 1U << ( ( k ) % ( sizeof(unsigned int) * CHAR_BIT ) ) ) )
+#define DEL_BIT(A,k) (   A[ ( ( k ) / ( sizeof(unsigned int) * CHAR_BIT ) ) ] &= ~( 1U << ( ( k ) % ( sizeof(unsigned int) * CHAR_BIT ) ) ) )
+#define GET_BIT(A,k) ( ( A[ ( ( k ) / ( sizeof(unsigned int) * CHAR_BIT ) ) ] >>          ( ( k ) % ( sizeof(unsigned int) * CHAR_BIT ) ) ) & 1U )
 
 namespace jans{
 
