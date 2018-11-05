@@ -56,6 +56,10 @@ namespace jans{
 
          static void diff( big_int & res, big_int & a, big_int & b );
 
+         void shift_up( const int k );
+
+         void shift_down( const int k );
+
          static void sanity_check();
 
          void read( const std::string number, const ubase_t base );
@@ -73,6 +77,10 @@ namespace jans{
          static void __clear__( ubase_t * a );
 
          static int __compare__( ubase_t * a, ubase_t * b );
+
+         static void __shift_up__( ubase_t * a, const int k );
+
+         static void __shift_down__( ubase_t * a, const int k );
 
          /********
           *  IO  *

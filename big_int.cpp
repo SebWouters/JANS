@@ -116,3 +116,66 @@ void jans::big_int::sum( big_int & res, big_int & a, big_int & b ){
 
 }
 
+void jans::big_int::shift_up( const int k ){
+
+   __shift_up__( data, k );
+   lead = 0;
+   for ( int i = 0; i < NUM_BLOCK; i++ ){ if ( data[ i ] != 0 ){ lead = i + 1; } }
+
+}
+
+void jans::big_int::shift_down( const int k ){
+
+   __shift_down__( data, k );
+   lead = 0;
+   for ( int i = 0; i < NUM_BLOCK; i++ ){ if ( data[ i ] != 0 ){ lead = i + 1; } }
+
+}
+
+void jans::big_int::__shift_up__( ubase_t * a, const int k ){
+
+   const int blk = k / BLOCK_BIT;
+   const int bit = k % BLOCK_BIT;
+
+   if ( blk > 0 ){
+      for ( int i = NUM_BLOCK - 1; i >= blk; i-- ){ a[ i ] = a[ i - blk ]; }
+      for ( int i = blk - 1;       i >= 0;   i-- ){ a[ i ] = 0;            }
+   }
+
+   if ( bit > 0 ){
+      for ( int i = NUM_BLOCK - 1; i > blk; i-- )  //  del bit                  set bit         in case bit is present downward
+      {  for ( int j = BLOCK_BIT - 1; j >= bit; j-- ){ a[  i  ] &= ~( 1 << j ); a[  i  ] |= ( ( a[   i   ] & ( 1 << (             j - bit ) ) ) << j ); }
+         for ( int j =       bit - 1; j >= 0;   j-- ){ a[  i  ] &= ~( 1 << j ); a[  i  ] |= ( ( a[ i - 1 ] & ( 1 << ( BLOCK_BIT + j - bit ) ) ) << j ); }
+      }{ for ( int j = BLOCK_BIT - 1; j >= bit; j-- ){ a[ blk ] &= ~( 1 << j ); a[ blk ] |= ( ( a[  blk  ] & ( 1 << (             j - bit ) ) ) << j ); }
+         for ( int j =       bit - 1; j >= 0;   j-- ){ a[ blk ] &= ~( 1 << j ); }
+      }
+   }
+
+}
+
+void jans::big_int::__shift_down__( ubase_t * a, const int k ){
+
+   const int blk = k / BLOCK_BIT;
+   const int bit = k % BLOCK_BIT;
+   const int upi = NUM_BLOCK - blk - 1;
+   const int upj = BLOCK_BIT - bit;
+
+   if ( blk > 0 ){
+      for ( int i = 0;       i <= upi;      i++ ){ a[ i ] = a[ i + blk ]; }
+      for ( int i = upi + 1; i < NUM_BLOCK; i++ ){ a[ i ] = 0;            }
+   }
+
+   if ( bit > 0 ){
+      for ( int i = 0; i < upi; i++ ) //          del bit                  set bit         in case bit is present upward
+      {  for ( int j = 0;   j < upj;       j++ ){ a[  i  ] &= ~( 1 << j ); a[  i  ] |= ( ( a[   i   ] & ( 1 << ( j + bit ) ) ) << j ); }
+         for ( int j = upj; j < BLOCK_BIT; j++ ){ a[  i  ] &= ~( 1 << j ); a[  i  ] |= ( ( a[ i + 1 ] & ( 1 << ( j - upj ) ) ) << j ); }
+      }{ for ( int j = 0;   j < upj;       j++ ){ a[ upi ] &= ~( 1 << j ); a[ upi ] |= ( ( a[  upi  ] & ( 1 << ( j + bit ) ) ) << j ); }
+         for ( int j = upj; j < BLOCK_BIT; j++ ){ a[ upi ] &= ~( 1 << j ); }
+      }
+   }
+
+}
+
+
+
+
