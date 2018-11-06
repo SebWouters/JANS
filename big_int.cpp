@@ -28,7 +28,6 @@
 TODO:
 
  * trace back valgrind issues
- * division & modulo: faster
  * gcd (Euclidean algorithm)
  * modular addition / subtraction
  * modular multiplication (Kochanski, Montgomery)
@@ -113,7 +112,7 @@ void jans::big_int::div( big_int & q, big_int & r, big_int & n, big_int & d ){
    int lq = 0;
    int lr = n.lead;
    __copy__( r.data, n.data );
-   __divide_simple__( q.data, lq, r.data, lr, d.data, d.lead );
+   __divide__( q.data, lq, r.data, lr, d.data, d.lead );
    q.sign = true;
    r.sign = true;
 

@@ -236,28 +236,7 @@ void jans::big_int::__divide__( ubase_t * q, int & lq, ubase_t * r, int & lr, ub
                   d = d_i b^n + ( b - 1 ) b^( n - 1 ) + ( b - 1 ) b^( n - 2 ) + ...
          In this case, q_guess = lower( r_i / d_i ) may be an overestimation.
 
-                                                       (      r_i b^n              )         (  r_i      )
-         In this (extremal outer) case, q_solve = lower( ------------------------- ) >= lower( --------- )
-                                                       (  ( ( d_i + 1 ) b^n - 1 )  )         (  d_i + 1  )
-
-    Perform bracketing?
-
-         q_max = lower( r_i / d_i );
-         q_low = lower( r_i / ( d_i + 1 ) );
-
-         if ( q_max * d <= r ){ solved; q_low = q_max; }
-
-         while ( q_max > q_low + 1 ){
-            q_test = ( q_max + q_low ) / 2;   --->   while condition implies: q_test >= ( 2 q_low + 2 ) / 2 = q_low + 1
-                                                                              q_test <= ( 2 q_max - 2 ) / 2 = q_max - 1
-            if ( q_test * d <= r ){
-               q_low = q_test;
-            } else {
-               q_max = q_test;
-            }
-         }
-
-         solved;
+         In this (extremal outer) case, q_solve = lower( r_i b^n / ( ( d_i + 1 ) b^n - 1 ) ) >= lower( r_i / ( d_i + 1 ) )
 */
 
    // Solves for n = q * d + r, with r < d; whereby initially (r, lr) contains (n, ln).
@@ -282,10 +261,10 @@ void jans::big_int::__divide__( ubase_t * q, int & lq, ubase_t * r, int & lr, ub
 
    for ( int iq = shift; iq >= 0; iq-- ){
 
-      const int ir = lr - 1 + iq - shift;
+      const int ir = ld - 1 + iq; // Aargh @ bug: lr varies
 
       ucarry_t num;
-      if ( ir != lr - 1 ){
+      if ( ir < lr - 1 ){
          num = r[ ir + 1 ];
          num = ( num << BLOCK_BIT ) + r[ ir ];
       } else {
@@ -301,6 +280,8 @@ void jans::big_int::__divide__( ubase_t * q, int & lq, ubase_t * r, int & lr, ub
 
       while ( q_max > q_min + 1 ){
          ubase_t q_test = ( ( ( ucarry_t ) q_max ) + ( ( ucarry_t ) q_min ) ) / 2;
+               // --->   while condition implies: q_test >= ( 2 q_low + 2 ) / 2 = q_low + 1
+               //                                 q_test <= ( 2 q_max - 2 ) / 2 = q_max - 1
          lt   = __mult2set__( temp, d, ld, q_test, iq );
          comp = __compare__( r, temp );
          if ( comp >= 0 ){
@@ -322,48 +303,6 @@ void jans::big_int::__divide__( ubase_t * q, int & lq, ubase_t * r, int & lr, ub
             lr = __diff3set__( r, r, temp );
          }
       }
-
-   }
-
-}
-
-void jans::big_int::__divide_simple__( ubase_t * q, int & lq, ubase_t * r, int & lr, ubase_t * d, const int ld ){
-
-   // Solves for n = q * d + r, with r < d; whereby initially (r, lr) contains (n, ln).
-
-   __clear__( q );
-   lq = 0;
-
-   const int comp = __compare__( r, d );
-   if ( comp <  0 ){ return; } // q = 0 and n = r < d
-   if ( comp == 0 ){ // q = 1 and r = 0
-      q[ 0 ] = 1;
-      lq = 1;
-      __clear__( r );
-      lr = 0;
-      return;
-   }
-
-   assert( lr >= ld );
-   assert( ld >= 1  );
-
-   int jrl = 0; for ( int j = 0; j < BLOCK_BIT; j++ ){ if ( ( r[ lr - 1 ] >> j ) & 1U ){ jrl = j; } }
-   int jdl = 0; for ( int j = 0; j < BLOCK_BIT; j++ ){ if ( ( d[ ld - 1 ] >> j ) & 1U ){ jdl = j; } }
-   const int shift_bit = ( lr - ld ) * BLOCK_BIT + ( jrl - jdl );
-
-   assert( shift_bit >= 0 );
-
-   if ( shift_bit > 0 ){ __shift_up__( d, shift_bit ); }
-
-   for ( int jq = shift_bit; jq >= 0; jq-- ){
-
-      const int larger = __compare__( r, d );
-      if ( larger >= 0 ){
-         lr = __diff3set__( r, r, d );
-         q[ jq / BLOCK_BIT ] |= ( 1U << ( jq % BLOCK_BIT ) );
-         if ( lq == 0 ){ lq = ( jq / BLOCK_BIT ) + 1; }
-      }
-      if ( jq > 0 ){ __shift_down__( d, 1 ); }
 
    }
 
