@@ -38,16 +38,10 @@ int jans::big_int::__sum3set__( ubase_t * r, ubase_t * a, const int la, ubase_t 
       z = z >> BLOCK_BIT;
    }
 
-   if ( z != 0 ){ // Normally z should be one in this case
-      if ( upper < NUM_BLOCK ){
-         r[ upper ] = 1; // z & __11111111__;
-         return ( upper + 1 );
-      } else {
-         assert( false ); // Overflow exception
-      }
-   }
-
-   return upper;
+   if ( z == 0 ){ return upper; }
+   assert( upper < NUM_BLOCK ); // If z != 0, z == 1, and we need to place z in upper: Overflow exception
+   r[ upper ] = 1;
+   return ( upper + 1 );
 
 }
 
@@ -65,7 +59,7 @@ int jans::big_int::__plus_one__( ubase_t * r, const int lr ){
       ir++;
    }
 
-   if ( z != 0 ){ assert( false ); } // Then while loop stopped because ( ir == NUM_BLOCK ): Overflow exception
+   assert( z == 0 ); // If z != 0, while loop stopped because ( ir == NUM_BLOCK ): Overflow exception
 
    return ( ( ir > lr ) ? ir : lr );
 
@@ -75,7 +69,6 @@ int jans::big_int::__diff3set__( ubase_t * r, ubase_t * a, ubase_t * b ){
 
    // r = a - b
 
-   // if ( ( r != a ) && ( r != b ) ){ __clear__( r ); } ---> Not necessary: for i < comp, it will be overwritten; for i >= comp, it will be set to zero.
    const int comp = __compare__( a, b );
    assert( comp >= 0 );
 
@@ -92,10 +85,9 @@ int jans::big_int::__diff3set__( ubase_t * r, ubase_t * a, ubase_t * b ){
          r[ i ] = ( ( add + ( ( ucarry_t )( 1UL ) << BLOCK_BIT ) ) - sub );
          sub = 1;
       }
-   }
-   for ( int i = comp; i < NUM_BLOCK; i++ ){ r[ i ] = 0; }
+   } // At end of loop sub == 0, as comp >= 0
+   for ( int i = comp; i < NUM_BLOCK; i++ ){ r[ i ] = 0; } // Non-set part of the array is cleared here.
 
-   assert( sub == 0 );
    for ( int i = comp; i > 0; i-- ){ if ( r[ i - 1 ] != 0 ){ return i; } }
    return 0;
 
@@ -127,11 +119,25 @@ int jans::big_int::__mult3add__( ubase_t * r, const int lr, ubase_t * a, const i
 
 int jans::big_int::__mult2set__( ubase_t * r, ubase_t * a, const int la, const ubase_t b, const int shift ){
 
-   // r = a * b
+   // r[ shift : ] = b * a[ : ]
 
    __clear__( r );
-   const int lr = __mult2add__( r, 0, a, la, b, shift );
-   return lr;
+   const int upper = shift + la;
+   assert( ( upper - 1 ) < NUM_BLOCK ); // shift + ia <= shift + la - 1 < NUM_BLOCK: Overflow exception
+
+         ucarry_t z = 0;
+   const ucarry_t f = b;
+
+   for ( int ia = 0; ia < la; ia++ ){
+      z = z + ( f * a[ ia ] );
+      r[ shift + ia ] = z & __11111111__;
+      z = z >> BLOCK_BIT;
+   }
+
+   if ( z == 0 ){ return upper; }
+   assert( upper < NUM_BLOCK ); // If z != 0, we need to place z in upper: Overflow exception
+   r[ upper ] = z;
+   return ( upper + 1 );
 
 }
 
@@ -165,7 +171,7 @@ int jans::big_int::__mult2add__( ubase_t * r, const int lr, ubase_t * a, const i
       ir++;
    }
 
-   if ( z != 0 ){ assert( false ); } // Then while loop stopped because ( ir == NUM_BLOCK ): Overflow exception
+   assert( z == 0 ); // If z != 0, while loop stopped because ( ir == NUM_BLOCK ): Overflow exception
 
    return ( ( ir > lr ) ? ir : lr );
 
@@ -175,26 +181,19 @@ int jans::big_int::__scal1__( ubase_t * r, const int lr, const ubase_t b ){
 
    // r = r * b
 
-   ucarry_t x = 0;
-   ucarry_t z = 0;
+         ucarry_t z = 0;
+   const ucarry_t f = b;
 
    for ( int ir = 0; ir < lr; ir++ ){
-      x = r[ ir ];
-      z = z + ( x * b );
+      z = z + ( f * r[ ir ] );
       r[ ir ] = z & __11111111__;
       z = z >> BLOCK_BIT;
    }
 
-   if ( z != 0 ){
-      if ( lr < NUM_BLOCK ){
-         r[ lr ] = z & __11111111__;
-         return ( lr + 1 );
-      } else {
-         assert( false ); // Overflow exception
-      }
-   }
-
-   return lr;
+   if ( z == 0 ){ return lr; }
+   assert( lr < NUM_BLOCK ); // If z != 0, we need to place z in lr: Overflow exception
+   r[ lr ] = z & __11111111__;
+   return ( lr + 1 );
 
 }
 
@@ -261,7 +260,7 @@ void jans::big_int::__divide__( ubase_t * q, int & lq, ubase_t * r, int & lr, ub
 
    for ( int iq = shift; iq >= 0; iq-- ){
 
-      const int ir = ld - 1 + iq; // Aargh @ bug: lr varies
+      const int ir = ld - 1 + iq;
 
       ucarry_t num;
       if ( ir < lr - 1 ){
@@ -274,25 +273,20 @@ void jans::big_int::__divide__( ubase_t * q, int & lq, ubase_t * r, int & lr, ub
       ubase_t q_min = num / ( d[ ld - 1 ] + 1UL );
 
       ubase_t temp[ NUM_BLOCK ];
-      int lt   = __mult2set__( temp, d, ld, q_max, iq );
+      __mult2set__( temp, d, ld, q_max, iq );
       int comp = __compare__( r, temp );
       if ( comp >= 0 ){ q_min = q_max; }
 
       while ( q_max > q_min + 1 ){
-         ubase_t q_test = ( ( ( ucarry_t ) q_max ) + ( ( ucarry_t ) q_min ) ) / 2;
-               // --->   while condition implies: q_test >= ( 2 q_low + 2 ) / 2 = q_low + 1
-               //                                 q_test <= ( 2 q_max - 2 ) / 2 = q_max - 1
-         lt   = __mult2set__( temp, d, ld, q_test, iq );
+         ubase_t q_test = ( ( ( ucarry_t ) q_max ) + ( ( ucarry_t ) q_min ) ) / 2;  // while condition implies q_min + 1 <= q_test <= q_max - 1
+         __mult2set__( temp, d, ld, q_test, iq );
          comp = __compare__( r, temp );
-         if ( comp >= 0 ){
-            q_min = q_test;
-         } else {
-            q_max = q_test;
-         }
+         if ( comp >= 0 ){ q_min = q_test; }
+                    else { q_max = q_test; }
       }
 
       q[ iq ] = q_min; // q_min contains solution
-      if ( ( q[ iq ] > 0 ) && ( lq == 0 ) ){ lq = iq + 1; }
+      if ( ( q_min > 0 ) && ( lq == 0 ) ){ lq = iq + 1; }
       if ( comp == 0 ){
          lr = 0;
          __clear__( r );
