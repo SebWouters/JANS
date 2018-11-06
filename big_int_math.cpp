@@ -236,9 +236,9 @@ void jans::big_int::__divide__( ubase_t * q, int & lq, ubase_t * r, int & lr, ub
                   d = d_i b^n + ( b - 1 ) b^( n - 1 ) + ( b - 1 ) b^( n - 2 ) + ...
          In this case, q_guess = lower( r_i / d_i ) may be an overestimation.
 
-                                                                         r_i b^n                    r_i
-         In this (extremal outer) case, a lower bound is q_solve <= ------------------------- <= -------------
-                                                                     ( ( d_i + 1 ) b^n - 1 )      ( d_i + 1 )
+                                                       (      r_i b^n              )         (  r_i      )
+         In this (extremal outer) case, q_solve = lower( ------------------------- ) >= lower( --------- )
+                                                       (  ( ( d_i + 1 ) b^n - 1 )  )         (  d_i + 1  )
 
     Perform bracketing?
 
@@ -287,7 +287,6 @@ void jans::big_int::__divide__( ubase_t * q, int & lq, ubase_t * r, int & lr, ub
       ucarry_t num;
       if ( ir != lr - 1 ){
          num = r[ ir + 1 ];
-         r[ ir + 1 ] = 0;
          num = ( num << BLOCK_BIT ) + r[ ir ];
       } else {
          num = r[ ir ];
