@@ -125,12 +125,12 @@ int jans::big_int::__mult3add__( ubase_t * r, const int lr, ubase_t * a, const i
 
 }
 
-int jans::big_int::__mult2set__( ubase_t * r, ubase_t * a, const int la, const ubase_t b ){
+int jans::big_int::__mult2set__( ubase_t * r, ubase_t * a, const int la, const ubase_t b, const int shift ){
 
    // r = a * b
 
    __clear__( r );
-   const int lr = __mult2add__( r, 0, a, la, b, 0 );
+   const int lr = __mult2add__( r, 0, a, la, b, shift );
    return lr;
 
 }
@@ -226,7 +226,7 @@ void jans::big_int::__divide__( ubase_t * q, int & lq, ubase_t * r, int & lr, co
 
 }
 
-//void jans::big_int::__divide__( ubase_t * q, int & lq, ubase_t * r, int & lr, ubase_t * d, const int ld ){
+void jans::big_int::__divide__( ubase_t * q, int & lq, ubase_t * r, int & lr, ubase_t * d, const int ld ){
 
 /*  Outer case 1: r = r_i b^n + ( b - 1 ) b^( n - 1 ) + ( b - 1 ) b^( n - 2 ) + ...
                   d = d_i b^n +     ( 0 ) b^( n - 1 ) +     ( 0 ) b^( n - 2 ) + ...
@@ -236,24 +236,20 @@ void jans::big_int::__divide__( ubase_t * q, int & lq, ubase_t * r, int & lr, co
                   d = d_i b^n + ( b - 1 ) b^( n - 1 ) + ( b - 1 ) b^( n - 2 ) + ...
          In this case, q_guess = lower( r_i / d_i ) may be an overestimation.
 
-    Outer case 2.1: r_i = d_i
-         In this case, q_guess = 1 but should have been q_solve = 0
+                                                                         r_i b^n                    r_i
+         In this (extremal outer) case, a lower bound is q_solve <= ------------------------- <= -------------
+                                                                     ( ( d_i + 1 ) b^n - 1 )      ( d_i + 1 )
 
-    Outer case 2.2: r_i = ( b - 1 )
-                    d_i = 1                                                  ( b - 1 ) b^n
-         In this case, q_guess = ( b - 1 ) but should have been q_solve <= --------------- <= 1/2 = 0
-                                                                             ( 2 b^n - 1 )
+    Perform bracketing?
 
-    Outer case 2.3: r_i = q_guess * d_i + rem                                 r_i b^n                    r_i
-         In this case, q_guess = q_guess but should have been q_solve <= ------------------------- <= -------------
-                                                                          ( ( d_i + 1 ) b^n - 1 )      ( d_i + 1 )
+         q_max = lower( r_i / d_i );
+         q_low = lower( r_i / ( d_i + 1 ) );
 
-    Perform bracketing? Ini: ( q_max = lower( r_i / d_i ), q_low = lower( r_i / ( d_i + 1 ) )
-
-         if ( q_max * d <= r ){ solved; }
+         if ( q_max * d <= r ){ solved; q_low = q_max; }
 
          while ( q_max > q_low + 1 ){
-            q_test = ( q_max + q_low ) / 2; // previous implies q_test >= ( 2 q_low + 2 ) / 2 = q_low + 1
+            q_test = ( q_max + q_low ) / 2;   --->   while condition implies: q_test >= ( 2 q_low + 2 ) / 2 = q_low + 1
+                                                                              q_test <= ( 2 q_max - 2 ) / 2 = q_max - 1
             if ( q_test * d <= r ){
                q_low = q_test;
             } else {
@@ -263,6 +259,74 @@ void jans::big_int::__divide__( ubase_t * q, int & lq, ubase_t * r, int & lr, co
 
          solved;
 */
+
+   // Solves for n = q * d + r, with r < d; whereby initially (r, lr) contains (n, ln).
+
+   __clear__( q );
+   lq = 0;
+
+   const int comp = __compare__( r, d );
+   if ( comp <  0 ){ return; } // q = 0 and n = r < d
+   if ( comp == 0 ){ // q = 1 and r = 0
+      q[ 0 ] = 1;
+      lq = 1;
+      __clear__( r );
+      lr = 0;
+      return;
+   }
+
+   assert( lr >= ld );
+   assert( ld >= 1  );
+
+   const int shift = lr - ld;
+
+   for ( int iq = shift; iq >= 0; iq-- ){
+
+      const int ir = lr - 1 + iq - shift;
+
+      ucarry_t num;
+      if ( ir != lr - 1 ){
+         num = r[ ir + 1 ];
+         r[ ir + 1 ] = 0;
+         num = ( num << BLOCK_BIT ) + r[ ir ];
+      } else {
+         num = r[ ir ];
+      }
+      ubase_t q_max = num / ( d[ ld - 1 ] );
+      ubase_t q_min = num / ( d[ ld - 1 ] + 1UL );
+
+      ubase_t temp[ NUM_BLOCK ];
+      int lt   = __mult2set__( temp, d, ld, q_max, iq );
+      int comp = __compare__( r, temp );
+      if ( comp >= 0 ){ q_min = q_max; }
+
+      while ( q_max > q_min + 1 ){
+         ubase_t q_test = ( ( ( ucarry_t ) q_max ) + ( ( ucarry_t ) q_min ) ) / 2;
+         lt   = __mult2set__( temp, d, ld, q_test, iq );
+         comp = __compare__( r, temp );
+         if ( comp >= 0 ){
+            q_min = q_test;
+         } else {
+            q_max = q_test;
+         }
+      }
+
+      q[ iq ] = q_min; // q_min contains solution
+      if ( ( q[ iq ] > 0 ) && ( lq == 0 ) ){ lq = iq + 1; }
+      if ( comp == 0 ){
+         lr = 0;
+         __clear__( r );
+         return;
+      } else {
+         if ( q_min > 0 ){
+            if ( comp < 0 ){ __mult2set__( temp, d, ld, q_min, iq ); } // Latest temp based on q_max if comp < 0 --> calc temp
+            lr = __diff3set__( r, r, temp );
+         }
+      }
+
+   }
+
+}
 
 void jans::big_int::__divide_simple__( ubase_t * q, int & lq, ubase_t * r, int & lr, ubase_t * d, const int ld ){
 

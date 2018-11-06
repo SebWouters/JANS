@@ -115,8 +115,8 @@ int main()
 {
 
    jans::big_int::sanity_check();
-   test1( true );
-   //test2( true );
+   //test1( true );
+   test2( true );
    //test3();
 
    return 0;

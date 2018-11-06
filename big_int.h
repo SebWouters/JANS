@@ -120,8 +120,8 @@ namespace jans{
          // r += a * b
          static int __mult3add__( ubase_t * r, const int lr, ubase_t * a, const int la, ubase_t * b, const int lb );
 
-         // r = a * b; calls __clear__( r )
-         static int __mult2set__( ubase_t * r, ubase_t * a, const int la, const ubase_t b );
+         // r[ shift : ] = a[ : ] * b; calls __clear__( r )
+         static int __mult2set__( ubase_t * r, ubase_t * a, const int la, const ubase_t b, const int shift = 0 );
 
          // r[ shift : ] += b * a[ : ]; this would be lapack "axpy" with a shift
          static int __mult2add__( ubase_t * r, const int lr, ubase_t * a, const int la, const ubase_t b, const int shift = 0 );
@@ -131,6 +131,9 @@ namespace jans{
 
          // Solves for n = q * d + r, with r < d; whereby initially (r, lr) contains (n, ln).
          static void __divide__( ubase_t * q, int & lq, ubase_t * r, int & lr, const ubase_t div );
+
+         // Solves for n = q * d + r, with r < d; whereby initially (r, lr) contains (n, ln).
+         static void __divide__( ubase_t * q, int & lq, ubase_t * r, int & lr, ubase_t * d, const int ld );
 
          // Solves for n = q * d + r, with r < d; whereby initially (r, lr) contains (n, ln).
          static void __divide_simple__( ubase_t * q, int & lq, ubase_t * r, int & lr, ubase_t * d, const int ld );
