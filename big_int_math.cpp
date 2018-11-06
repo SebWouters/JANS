@@ -226,13 +226,44 @@ void jans::big_int::__divide__( ubase_t * q, int & lq, ubase_t * r, int & lr, co
 
 }
 
-         /*  General case:
+/*  General case:
 
-             Watch out: based on first two digits, one would get two, while it is in fact 1.
-              1700021
-               875200
+    Watch out: based on first two digits, one would get two, while it is in fact 1.
 
-         */
+     1700021
+      875200
+
+    Outer case 1: r = r_i b^n + ( b - 1 ) b^( n - 1 ) + ( b - 1 ) b^( n - 2 ) + ...
+                  d = d_i b^n +     ( 0 ) b^( n - 1 ) +     ( 0 ) b^( n - 2 ) + ...
+         In this case, q_guess = lower( r_i / d_i ) is correct.
+
+    Outer case 2: r = r_i b^n +     ( 0 ) b^( n - 1 ) +     ( 0 ) b^( n - 2 ) + ...
+                  d = d_i b^n + ( b - 1 ) b^( n - 1 ) + ( b - 1 ) b^( n - 2 ) + ...
+         In this case, q_guess = lower( r_i / d_i ) may be an overestimation.
+
+    Outer case 2.1: r_i = d_i
+         In this case, q_guess = 1 but should have been q_solve = 0
+
+    Outer case 2.2: r_i = ( b - 1 )
+                    d_i = 1                                                  ( b - 1 ) b^n
+         In this case, q_guess = ( b - 1 ) but should have been q_solve <= --------------- <= 1/2 = 0
+                                                                             ( 2 b^n - 1 )
+    Perform bracketing? Ini: ( q_max = q_guess, q_low = 0 )
+
+         if ( q_max * d <= r ){ solved; }
+
+         while ( q_max > q_low + 1 ){
+            q_test = ( q_max + q_low ) / 2; // previous implies q_test >= ( 2 q_low + 2 ) / 2 = q_low + 1
+            if ( q_test * d <= r ){
+               q_low = q_test;
+            } else {
+               q_max = q_test;
+            }
+         }
+
+         solved;
+
+*/
 
 void jans::big_int::__divide_simple__( ubase_t * q, int & lq, ubase_t * r, int & lr, ubase_t * d, const int ld ){
 

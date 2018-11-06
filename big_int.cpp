@@ -27,6 +27,7 @@
 
 TODO:
 
+ * trace back valgrind issues
  * division & modulo: faster
  * gcd (Euclidean algorithm)
  * modular addition / subtraction
