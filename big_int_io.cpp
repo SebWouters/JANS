@@ -94,15 +94,14 @@ std::string jans::big_int::write( const ubase_t base ) const{
    char text[ text_size ];
    for ( int c = 0; c < text_size; c++ ){ text[ c ] = '0'; }
 
-   ubase_t div[ NUM_BLOCK ]; __clear__( div );       int ld  = 1;    div[ 0 ] = base;
    ubase_t nu1[ NUM_BLOCK ]; __clear__( nu1 );       int ln1 = 0;
    ubase_t nu2[ NUM_BLOCK ];  __copy__( nu2, data ); int ln2 = lead;
 
    char digit;
    int c = 0;
    while ( ( ln2 > 0 ) || ( nu2[ 0 ] != 0 ) ){
-      __divide__( nu1, ln1, nu2, ln2, div, ld ); digit = __convert_i2c__( nu2[ 0 ] ); text[ text_size - 1 - c ] = digit; c++;
-      __divide__( nu2, ln2, nu1, ln1, div, ld ); digit = __convert_i2c__( nu1[ 0 ] ); text[ text_size - 1 - c ] = digit; c++;
+      __divide__( nu1, ln1, nu2, ln2, base ); digit = __convert_i2c__( nu2[ 0 ] ); text[ text_size - 1 - c ] = digit; c++;
+      __divide__( nu2, ln2, nu1, ln1, base ); digit = __convert_i2c__( nu1[ 0 ] ); text[ text_size - 1 - c ] = digit; c++;
    }
 
    std::string reduction( text, 0, text_size ); // Clear clutter at end

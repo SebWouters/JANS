@@ -130,7 +130,10 @@ namespace jans{
          static int __scal1__( ubase_t * r, const int lr, const ubase_t b );
 
          // Solves for n = q * d + r, with r < d; whereby initially (r, lr) contains (n, ln).
-         static void __divide__( ubase_t * q, int & lq, ubase_t * r, int & lr, ubase_t * d, const int ld );
+         static void __divide__( ubase_t * q, int & lq, ubase_t * r, int & lr, const ubase_t div );
+
+         // Solves for n = q * d + r, with r < d; whereby initially (r, lr) contains (n, ln).
+         static void __divide_simple__( ubase_t * q, int & lq, ubase_t * r, int & lr, ubase_t * d, const int ld );
 
    };
 

@@ -198,7 +198,43 @@ int jans::big_int::__scal1__( ubase_t * r, const int lr, const ubase_t b ){
 
 }
 
-void jans::big_int::__divide__( ubase_t * q, int & lq, ubase_t * r, int & lr, ubase_t * d, const int ld ){
+void jans::big_int::__divide__( ubase_t * q, int & lq, ubase_t * r, int & lr, const ubase_t div ){
+
+   // Solves for n = q * d + r, with r < d; whereby initially (r, lr) contains (n, ln).
+
+   for ( int iq = lr; iq < NUM_BLOCK; iq++ ){ q[ iq ] = 0; }
+   lq = 0;
+   if ( lr == 0 ){ return; } // q = r = 0
+
+   for ( int iqr = lr - 1; iqr >= 0; iqr-- ){
+
+      ucarry_t num;
+      if ( iqr != lr - 1 ){
+         num = r[ iqr + 1 ];
+         r[ iqr + 1 ] = 0;
+         num = ( num << BLOCK_BIT ) + r[ iqr ];
+      } else {
+         num = r[ iqr ];
+      }
+      q[ iqr ] = num / div;
+      r[ iqr ] = num % div;
+      if ( ( q[ iqr ] > 0 ) && ( lq == 0 ) ){ lq = iqr + 1; }
+
+   }
+
+   lr = ( ( r[ 0 ] == 0 ) ? 0 : 1 );
+
+}
+
+         /*  General case:
+
+             Watch out: based on first two digits, one would get two, while it is in fact 1.
+              1700021
+               875200
+
+         */
+
+void jans::big_int::__divide_simple__( ubase_t * q, int & lq, ubase_t * r, int & lr, ubase_t * d, const int ld ){
 
    // Solves for n = q * d + r, with r < d; whereby initially (r, lr) contains (n, ln).
 

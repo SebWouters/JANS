@@ -49,6 +49,8 @@ bool test1( const bool print ){
    if ( print ){
 
       std::cout << "Test 1: reading and writing of numbers in bin, dec & hex" << std::endl;
+      std::cout << "rsa_100_n_dec = " << rsa_100_n_dec << std::endl;
+      std::cout << "n_dec         = " << n_dec << std::endl;
       std::cout << "Equal(n1,n2) = " << equal12 << std::endl;
       std::cout << "Equal(n1,n3) = " << equal13 << std::endl;
       std::cout << "Equal(bin)   = " << equal_bin << std::endl;
