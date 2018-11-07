@@ -9,19 +9,23 @@ TODO
  * sieve : With N = 2^32, N/ln(N) yields 193635250 primes. I guess base_t division will suffice for subset of primes? ]
  * sieve : Perhaps make an int jans::big_int::extract( big_int & num, int & ln, base_t factor ); x = extract( n_in, f ); --> n_out * f^x = n_in and ( n_out mod f ) == 0 ]
 
- * Observation by Pomerance ( http://websites.math.leidenuniv.nl/algebra/sieving.pdf )
- *    Suppose N and B are given
- *    Find the p in 2 < p <= B so that x^2 = N mod p contains 2 solutions a_1 and a_2 (typically zero or two solutions, if one then p | N)
- *    Sieve the x's for [ x = a_i ] mod p, i.e. x = a_1 + s*p and x = a_2 + t*p
- *    For such x, it holds that x*x mod N = x*x - l*N for some l
- *                and hence [ x*x mod N ] mod p = [ a_i^2 + 2*p*a_i + p^2 - l*N ] mod p = [ a_i^2 - l*N ] mod p = 0
-
  * Use an actual sieve instead of division
  *    S_k: x so that ceil( sqrt(kN) ) <= x <= ceil (sqrt((k+1)N) - 1 < sqrt((k+1)N)
  *    For x in S_k: x*x mod N = x*x - kN, which lends itself to list sieving
- *    For a certain subset of S_k: compute ( x, x^2 mod N ) = ( x, x^2 - kN )
- *                                 check x^2 mod n B-smooth --> sieve the set 
- *    Observation by Pomerance ( http://websites.math.leidenuniv.nl/algebra/sieving.pdf )
- *    Suppose N and B are given, find the p in 2 < p <= B so that
 
+
+Pomerance ( http://websites.math.leidenuniv.nl/algebra/sieving.pdf )
+--------------------------------------------------------------------
+
+The problem is that you want to sieve for presence of prime factors in x * x mod N, with ceil(sqrt( N )) <= x < ceil(sqrt( 2 * N )) and hence x * x mod N = x * x - N, without actually computing the expensive x * x or x * x mod N. The a_i allow this.
+
+The p in 2 < p <= B are searched so that [ a * a = N ] mod p contains 2 solutions a_1 and a_2. The number of solutions of [ a * a = N ] mod p can be zero, one or two. If there is one solution, then p | N, so this typically doesn't happen. The cases of zero and two solutions occur - apparently - with about equal probability.
+
+The x's are sieved based on [ x = a_i ] mod p, hence augmenting s and t in x = a_1 + s * p and x = a_2 + t * p.
+
+For such x, it holds that [ x * x mod N ] mod p = [ a_i * a_i + 2 * p * a_i + p * p - N ] mod p = [ a_i * a_i - N ] mod p = 0.
+
+Conversely, any x can be written as x = q * p + r. What does [ x * x mod N ] mod p = 0 tell us about r?
+
+It holds that 0 = [ x * x mod N ] mod p = [ x * x - N ] mod p = [ q * q * p * p + 2 * p * q * r + r * r - N ] mod p = [ r * r - N ] mod p.
 
