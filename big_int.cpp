@@ -23,21 +23,6 @@
 
 #include "big_int.h"
 
-/*
-
-TODO:
-
- * sieve : gcd (Euclidean algorithm): gcd(a,b) --> if b divides a, then b, else gcd(b,a mod b)
- * sieve : sqrt( N ) : perhaps the Babylonian method: x_new = ( x + N / x ) / 2?
- * sieve : multiplication mod N; ( a * b ) mod N = ( a mod N * b mod N ) mod N, or is there something fancier?
- * sieve : With N = 2^32, N/ln(N) yields 193635250 primes. I guess base_t division will suffice for subset of primes?
- * sieve : Perhaps make an int jans::big_int::extract( big_int & num, int & ln, base_t factor ); x = extract( n_in, f ); --> n_out * f^x = n_in and ( n_out mod f ) == 0
- *
- * modular addition / subtraction
- * modular multiplication (Kochanski, Montgomery)
-
-*/
-
 jans::big_int::big_int(){
 
    sign = true;

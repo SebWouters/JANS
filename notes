@@ -1,0 +1,27 @@
+TODO
+====
+
+ * gcd (Euclidean algorithm): gcd(a,b) --> if b divides a, then b, else gcd(b,a mod b); not that often used in sieve
+ * void jans::big_int::ceil_sqrt( N, sol ) --> Babylonian method: x_new = ( x + N / x ) / 2?
+ * multiplication mod N; ( a * b ) mod N = ( a mod N * b mod N ) mod N, or is there something fancier?
+ * modular multiplication (Kochanski, Montgomery)
+
+ * sieve : With N = 2^32, N/ln(N) yields 193635250 primes. I guess base_t division will suffice for subset of primes? ]
+ * sieve : Perhaps make an int jans::big_int::extract( big_int & num, int & ln, base_t factor ); x = extract( n_in, f ); --> n_out * f^x = n_in and ( n_out mod f ) == 0 ]
+
+ * Observation by Pomerance ( http://websites.math.leidenuniv.nl/algebra/sieving.pdf )
+ *    Suppose N and B are given
+ *    Find the p in 2 < p <= B so that x^2 = N mod p contains 2 solutions a_1 and a_2 (typically zero or two solutions, if one then p | N)
+ *    Sieve the x's for [ x = a_i ] mod p, i.e. x = a_1 + s*p and x = a_2 + t*p
+ *    For such x, it holds that x*x mod N = x*x - l*N for some l
+ *                and hence [ x*x mod N ] mod p = [ a_i^2 + 2*p*a_i + p^2 - l*N ] mod p = [ a_i^2 - l*N ] mod p = 0
+
+ * Use an actual sieve instead of division
+ *    S_k: x so that ceil( sqrt(kN) ) <= x <= ceil (sqrt((k+1)N) - 1 < sqrt((k+1)N)
+ *    For x in S_k: x*x mod N = x*x - kN, which lends itself to list sieving
+ *    For a certain subset of S_k: compute ( x, x^2 mod N ) = ( x, x^2 - kN )
+ *                                 check x^2 mod n B-smooth --> sieve the set 
+ *    Observation by Pomerance ( http://websites.math.leidenuniv.nl/algebra/sieving.pdf )
+ *    Suppose N and B are given, find the p in 2 < p <= B so that
+
+
