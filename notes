@@ -29,3 +29,13 @@ Conversely, any x can be written as x = q * p + r. What does [ x * x mod N ] mod
 
 It holds that 0 = [ x * x mod N ] mod p = [ x * x - N ] mod p = [ q * q * p * p + 2 * p * q * r + r * r - N ] mod p = [ r * r - N ] mod p.
 
+Additional info:
+ * https://crypto.stackexchange.com/questions/35590/sieving-the-sequence-x2-n-to-recognize-b-smooth-numbers
+ * https://crypto.stackexchange.com/questions/35615/in-the-quadratic-sieve-why-restrict-the-factor-base
+
+In particular: Sieve integers of the form (a*x+b)^2 - n, with (a,b) chosen appropriately, in particular such that (a*x+b)^2 - n is divisible by a (allowing a as a factor, if it does not belong to the factor base). This is what actually used variants of the Multiple Polynomial Quadratic Sieve do. The multiple polynomials allows to remain in the region where the un-factored part of what's sieved is small, so that the rate of finding smooth does not become vanishingly small. One advantage compared to the previous solution is that the factor base used for sieving is the same for all the polynomials used.
+
+It seems that popular variants of the QS are looking for smooth only of the form x^2 - N with x = a*y + b, for appropriately chosen a and b; in particular, such that a divides (a*y+b)^2-N. That allows to restrict the factor base without lowering the performance of sieving. Restricting the factor base is good because it about halves the number of variables in the system of linear equations to be solved; and about halves the number of smooths to be found before a solution to such system can be found.
+
+So: implement the Multiple Polynomial Quadratic Sieve with a = 1 and b = 0 as an option?
+
