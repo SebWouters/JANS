@@ -81,7 +81,8 @@ std::string jans::big_int::write( const ubase_t base ) const{
          }
       }
 
-      std::string reduction( text, 0, text_size ); // Clear clutter at end
+      std::string reduction;
+      reduction.append( text, text_size ); // Clear clutter at end
       const int start  = reduction.find_first_not_of( '0' );
       const int length = reduction.size() - start;
       reduction = reduction.substr( start, length );
@@ -103,7 +104,8 @@ std::string jans::big_int::write( const ubase_t base ) const{
       c++;
    }
 
-   std::string reduction( text, 0, text_size ); // Clear clutter at end
+   std::string reduction;
+   reduction.append( text, text_size ); // Clear clutter at end
    const int start  = reduction.find_first_not_of( '0' );
    const int length = reduction.size() - start;
    reduction = reduction.substr( start, length );

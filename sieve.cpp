@@ -21,13 +21,14 @@
 #include <stdio.h>
 #include <iostream>
 #include <math.h>
+#include <stdlib.h>
 
 #include "sieve.h"
 
 jans::sieve::sieve( const ubase_t bound, big_int & num ){
 
    this->bound = bound;
-   n.copy( num );
+   target.copy( num );
    __startup__();
 
 }
@@ -61,7 +62,7 @@ void jans::sieve::__startup__(){
          process = ( ( process ) && ( number > 2 ) && ( number <= bound ) );
 
          if ( process ){
-            const bool ok = ( __legendre_symbol__( n, number ) == 1 );
+            const bool ok = ( __legendre_symbol__( target, number ) == 1 );
             if ( ok ){ num_primes++; }
             const ubase_t start = ( ( ok ) ? 3 : 1 );
             const ubase_t stop  = bound / number;
@@ -93,11 +94,10 @@ void jans::sieve::__startup__(){
          process = ( ( process ) && ( number > 2 ) && ( number <= bound ) );
 
          if ( process ){
-            // Obtain root
-            const ubase_t root = 0;
 
+            const ubase_t a = __root_quadratic_residue__( target, number );
             primes[ check ] = number;
-             roots[ check ] = root;
+             roots[ check ] = a;
             logval[ check ] = log( ( double ) number );
             check++;
 
@@ -106,20 +106,32 @@ void jans::sieve::__startup__(){
    }
    assert( check == num_primes );
 
+   std::cout << "target = " << target.write( 10 ) << std::endl;
+   for ( int cnt = 0; cnt < num_primes; cnt++ ){
+      std::cout << "prime[" << cnt << "] = " << primes[ cnt ] << " and has root " << roots[ cnt ] << std::endl;
+   }
+
    delete [] helper;
 
 }
 
-int jans::sieve::__legendre_symbol__( big_int & num, const ubase_t d_prime ){
+int jans::sieve::__legendre_symbol__( big_int & num, const ubase_t p ){
+
+   big_int work;
+   const ubase_t rem = jans::big_int::div( work, num, p );
+   return __legendre_symbol__( rem, p );
+
+}
+
+int jans::sieve::__legendre_symbol__( const ubase_t rem, const ubase_t p ){
 
    // Algorithm 2.3.5, Crandall & Pomerance
 
-   assert( ( d_prime % 2 ) != 0 );
+   assert( ( p % 2 ) != 0 );
 
    int t = 1;
-   big_int work;
-   ubase_t a = jans::big_int::div( work, num, d_prime );
-   ubase_t m = d_prime;
+   ubase_t a = rem % p;
+   ubase_t m = p;
 
    while ( a != 0 ){
       while ( ( a % 2 ) == 0 ){
@@ -137,5 +149,84 @@ int jans::sieve::__legendre_symbol__( big_int & num, const ubase_t d_prime ){
    return 0;
 
 }
+
+ubase_t jans::sieve::__power__( const ubase_t num, const ubase_t pow, const ubase_t mod ){
+
+   ucarry_t res = 1;
+   ucarry_t temp = num % mod; // temp = num^{2^j} % mod
+   for ( int j = 0; j < BLOCK_BIT; j++ ){
+      if ( ( pow >> j ) & 1U ){ res = ( res * temp ) % mod; }
+      temp = ( temp * temp ) % mod;
+   }
+   return res;
+
+}
+
+ubase_t jans::sieve::__root_quadratic_residue__( big_int & num, const ubase_t p ){
+
+   // Tonelli–Shanks
+   // https://ipfs.io/ipfs/QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco/wiki/Tonelli%E2%80%93Shanks_algorithm.html
+
+   big_int work;
+   const ubase_t rem = jans::big_int::div( work, num, p ); // rem = num % p
+
+   if ( p % 4 == 3 ){
+      return __power__( rem, ( p + 1 ) / 4, p );
+   }
+
+   ubase_t S = 0;
+   ubase_t Q = p - 1;
+   while ( Q % 2 == 0 ){
+      S++;
+      Q = Q / 2;
+   } // p = 2^S * Q(odd)
+
+   ubase_t z = 0;
+   int leg_sym = 0;
+   while ( leg_sym != -1 ){
+      z = ( rand() % ( p - 2 ) ) + 2; // random number in [ 2 .. p - 1 ]
+      leg_sym = __legendre_symbol__( z, p );
+   }
+
+   ubase_t c = __power__(   z, Q, p );
+   ubase_t t = __power__( rem, Q, p );
+   ubase_t M = S;
+   ubase_t R = __power__( rem, ( Q + 1 ) / 2, p );
+
+   while ( t != 1 ){
+
+      ubase_t i = 0;
+      ucarry_t b = t;
+      while ( ( b != 1 ) && ( i < M ) ){
+         b = ( b * b ) % p;
+         i++;
+      }
+      assert( i < M );
+
+      ubase_t j = 0;
+      b = c;
+      while ( j < M - i - 1 ){
+         b = ( b * b ) % p; // c^{2^j}
+         j++;
+      }
+
+      R = ( R * b ) % p;
+      t = ( ( ( t * b ) % p ) * b ) % p;
+      c = ( b * b ) % p;
+      M = i;
+
+   }
+
+   ucarry_t test = R;
+   test = ( test * test ) % p;
+   assert( test == rem );
+   return R;
+
+}
+
+
+
+
+
 
 
