@@ -59,6 +59,10 @@ namespace jans{
 
          static void div( big_int & q, big_int & r, big_int & n, big_int & d );
 
+         static void gcd( big_int & res, big_int & a, big_int & b );
+
+         static ubase_t gcd( big_int & a, const ubase_t b );
+
          void shift_up( const int k );
 
          void shift_down( const int k );
@@ -129,11 +133,14 @@ namespace jans{
          // r = r * b
          static int __scal1__( ubase_t * r, const int lr, const ubase_t b );
 
-         // Solves for n = q * d + r, with r < d; whereby initially (r, lr) contains (n, ln).
-         static void __divide__( ubase_t * q, int & lq, ubase_t * r, int & lr, const ubase_t div );
+         // Solves for n = q * d + r, with r < d; whereby initially (q, lq) contains (n, ln).
+         static ubase_t __divide__( ubase_t * q, int & lq, const ubase_t div );
 
          // Solves for n = q * d + r, with r < d; whereby initially (r, lr) contains (n, ln).
          static void __divide__( ubase_t * q, int & lq, ubase_t * r, int & lr, ubase_t * d, const int ld );
+
+         // Solves for temp = gcd( a, b ); a >= b; destroys a & b in the proces
+         static int __gcd__( ubase_t * temp, ubase_t * a, const int la, ubase_t * b, const int lb );
 
    };
 

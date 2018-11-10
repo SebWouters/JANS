@@ -121,6 +121,49 @@ void jans::big_int::div( big_int & q, big_int & r, big_int & n, big_int & d ){
 
 }
 
+void jans::big_int::gcd( big_int & res, big_int & a, big_int & b ){
+
+   assert( a.sign );
+   assert( b.sign );
+   res.sign = true;
+
+   const int comp = __compare__( a.data, b.data );
+   if ( comp == 0 ){ // a == b
+      __copy__( res.data, a.data );
+      res.lead = a.lead;
+      return;
+   }
+
+   ubase_t a_cpy[ NUM_BLOCK ]; __copy__( a_cpy, a.data );
+   ubase_t b_cpy[ NUM_BLOCK ]; __copy__( b_cpy, b.data );
+
+   if ( comp > 0 ){ res.lead = __gcd__( res.data, a_cpy, a.lead, b_cpy, b.lead ); } // a > b
+             else { res.lead = __gcd__( res.data, b_cpy, b.lead, a_cpy, a.lead ); } // b > a
+
+}
+
+ubase_t jans::big_int::gcd( big_int & a, const ubase_t b ){
+
+   assert( a.sign );
+   assert( ( a.lead > 1 ) || ( a.data[ 0 ] >= b ) );
+
+   ubase_t cpy[ NUM_BLOCK ];
+   __copy__( cpy, a.data );
+   int lq = a.lead;
+
+   ubase_t new_a = b;
+   ubase_t new_b = __divide__( cpy, lq, b ); // a mod b
+
+   while( new_b != 0 ){
+      ubase_t swap = new_b;
+      new_b = new_a % new_b;
+      new_a = swap;
+   }
+
+   return new_a;
+
+}
+
 void jans::big_int::shift_up( const int k ){
 
    __shift_up__( data, k );

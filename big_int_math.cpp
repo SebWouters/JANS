@@ -197,31 +197,27 @@ int jans::big_int::__scal1__( ubase_t * r, const int lr, const ubase_t b ){
 
 }
 
-void jans::big_int::__divide__( ubase_t * q, int & lq, ubase_t * r, int & lr, const ubase_t div ){
+ubase_t jans::big_int::__divide__( ubase_t * q, int & lq, const ubase_t div ){
 
-   // Solves for n = q * d + r, with r < d; whereby initially (r, lr) contains (n, ln).
+   // Solves for n = q * d + r, with r < d; whereby initially (q, lq) contains (n, ln).
 
-   for ( int iq = lr; iq < NUM_BLOCK; iq++ ){ q[ iq ] = 0; }
+   if ( lq == 0 ){ return 0; }
+
+   ucarry_t rem = 0;
+   const int start = lq - 1;
    lq = 0;
-   if ( lr == 0 ){ return; } // q = r = 0
 
-   for ( int iqr = lr - 1; iqr >= 0; iqr-- ){
+   for ( int iq = start; iq >= 0; iq-- ){
 
-      ucarry_t num;
-      if ( iqr != lr - 1 ){
-         num = r[ iqr + 1 ];
-         r[ iqr + 1 ] = 0;
-         num = ( num << BLOCK_BIT ) + r[ iqr ];
-      } else {
-         num = r[ iqr ];
+      rem = ( rem << BLOCK_BIT ) + q[ iq ];
+      q[ iq ] = rem / div;
+      if ( q[ iq ] > 0 ){
+         rem = rem - ( ( ( ucarry_t ) div ) * q[ iq ] );
+         if ( lq == 0 ){ lq = iq + 1; }
       }
-      q[ iqr ] = num / div;
-      r[ iqr ] = num % div;
-      if ( ( q[ iqr ] > 0 ) && ( lq == 0 ) ){ lq = iqr + 1; }
-
    }
 
-   lr = ( ( r[ 0 ] == 0 ) ? 0 : 1 );
+   return ( ( ubase_t )( rem ) );
 
 }
 
@@ -299,6 +295,26 @@ void jans::big_int::__divide__( ubase_t * q, int & lq, ubase_t * r, int & lr, ub
       }
 
    }
+
+}
+
+int jans::big_int::__gcd__( ubase_t * temp, ubase_t * a, const int la, ubase_t * b, const int lb ){
+
+   // Solves for temp = gcd( a, b ); a >= b; destroys a & b in the proces
+
+   ubase_t * al = a; int ll = la;
+   ubase_t * as = b; int ls = lb;
+   int lq = 0;
+
+   while ( ls != 0 ){
+
+      __divide__( temp, lq, al, ll, as, ls ); // al(in) = temp * as + al(out)
+      ubase_t * a_swap = al; al = as; as = a_swap;
+            int l_swap = ll; ll = ls; ls = l_swap;
+   }
+
+   __copy__( temp, al );
+   return ll;
 
 }
 
