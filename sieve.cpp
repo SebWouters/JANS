@@ -106,11 +106,6 @@ void jans::sieve::__startup__(){
    }
    assert( check == num_primes );
 
-   std::cout << "target = " << target.write( 10 ) << std::endl;
-   for ( int cnt = 0; cnt < num_primes; cnt++ ){
-      std::cout << "prime[" << cnt << "] = " << primes[ cnt ] << " and has root " << roots[ cnt ] << std::endl;
-   }
-
    delete [] helper;
 
 }
@@ -132,16 +127,17 @@ int jans::sieve::__legendre_symbol__( const ubase_t rem, const ubase_t p ){
    int t = 1;
    ubase_t a = rem % p;
    ubase_t m = p;
+   ubase_t s = 0;
 
    while ( a != 0 ){
       while ( ( a % 2 ) == 0 ){
          a = a / 2;
-         ubase_t temp = m % 8;
-         if ( ( temp == 3 ) || ( temp == 5 ) ){ t = -t; }
+         s = m % 8;
+         if ( ( s == 3 ) || ( s == 5 ) ){ t = -t; }
       }
-      ubase_t swap = a;
+      s = a;
       a = m;
-      m = swap;
+      m = s;
       if ( ( ( a % 4 ) == 3 ) && ( m % 4 == 3 ) ){ t = -t; }
       a = a % m;
    }
@@ -179,7 +175,7 @@ ubase_t jans::sieve::__root_quadratic_residue__( big_int & num, const ubase_t p 
    while ( Q % 2 == 0 ){
       S++;
       Q = Q / 2;
-   } // p = 2^S * Q(odd)
+   } // p - 1 = 2^S * Q(odd)
 
    ubase_t z = 0;
    int leg_sym = 0;

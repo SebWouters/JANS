@@ -1,17 +1,3 @@
-TODO
-====
-
- * multiplication mod N; ( a * b ) mod N = ( a mod N * b mod N ) mod N, or is there something fancier?
- * modular multiplication (Kochanski, Montgomery)
-
- * sieve : With N = 2^32, N/ln(N) yields 193635250 primes. I guess base_t division will suffice for subset of primes? ]
- * sieve : Perhaps make an int jans::big_int::extract( big_int & num, int & ln, base_t factor ); x = extract( n_in, f ); --> n_out * f^x = n_in and ( n_out mod f ) == 0 ]
-
- * Use an actual sieve instead of division
- *    S_k: x so that ceil( sqrt(kN) ) <= x <= ceil (sqrt((k+1)N) - 1 < sqrt((k+1)N)
- *    For x in S_k: x*x mod N = x*x - kN, which lends itself to list sieving
-
-
 Pomerance ( http://websites.math.leidenuniv.nl/algebra/sieving.pdf )
 --------------------------------------------------------------------
 
