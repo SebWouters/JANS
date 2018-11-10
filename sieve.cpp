@@ -118,14 +118,14 @@ int jans::sieve::__legendre_symbol__( big_int & num, const ubase_t p ){
 
 }
 
-int jans::sieve::__legendre_symbol__( const ubase_t rem, const ubase_t p ){
+int jans::sieve::__legendre_symbol__( const ubase_t num, const ubase_t p ){
 
    // Algorithm 2.3.5, Crandall & Pomerance
 
    assert( ( p % 2 ) != 0 );
 
    int t = 1;
-   ubase_t a = rem % p;
+   ubase_t a = num % p;
    ubase_t m = p;
    ubase_t s = 0;
 
@@ -160,11 +160,18 @@ ubase_t jans::sieve::__power__( const ubase_t num, const ubase_t pow, const ubas
 
 ubase_t jans::sieve::__root_quadratic_residue__( big_int & num, const ubase_t p ){
 
+   big_int work;
+   const ubase_t rem = jans::big_int::div( work, num, p ); // rem = num % p
+   return __root_quadratic_residue__( rem, p );
+
+}
+
+ubase_t jans::sieve::__root_quadratic_residue__( const ubase_t num, const ubase_t p ){
+
    // Tonelli–Shanks
    // https://ipfs.io/ipfs/QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco/wiki/Tonelli%E2%80%93Shanks_algorithm.html
 
-   big_int work;
-   const ubase_t rem = jans::big_int::div( work, num, p ); // rem = num % p
+   const ubase_t rem = num % p;
 
    if ( p % 4 == 3 ){
       return __power__( rem, ( p + 1 ) / 4, p );

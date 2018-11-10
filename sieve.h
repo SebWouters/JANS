@@ -48,13 +48,15 @@ namespace jans{
 
          void __startup__();
 
-         static int __legendre_symbol__( big_int & num, const ubase_t d_prime );
+         static int __legendre_symbol__( big_int & num, const ubase_t p );
 
-         static int __legendre_symbol__( const ubase_t rem, const ubase_t d_prime );
+         static int __legendre_symbol__( const ubase_t num, const ubase_t p );
 
          static ubase_t __power__( const ubase_t num, const ubase_t pow, const ubase_t mod );
 
          static ubase_t __root_quadratic_residue__( big_int & num, const ubase_t p );
+
+         static ubase_t __root_quadratic_residue__( const ubase_t num, const ubase_t p );
 
    };
 
