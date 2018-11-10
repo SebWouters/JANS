@@ -18,8 +18,8 @@
 */
 
 #include <assert.h>
-#include <stdio.h>
-#include <iostream>
+//#include <stdio.h>
+//#include <iostream>
 
 #include "big_int.h"
 
@@ -55,7 +55,7 @@ void jans::big_int::read( const std::string number, const ubase_t base ){
       const ubase_t digit = __convert_c2i__( number.at( i ) );
       assert( digit != 17 );
       if ( digit != 0 ){
-         lead = __mult2add__( data, lead, shift, ls, digit );
+         lead = __mult2add__( data, lead, shift, ls, digit, 0 );
       }
       ls = __scal1__( shift, ls, base );
    }

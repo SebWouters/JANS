@@ -92,6 +92,13 @@ void jans::big_int::prod( big_int & res, big_int & a, big_int & b ){
 
 }
 
+void jans::big_int::prod( big_int & res, big_int & a, const ubase_t b ){
+
+   res.sign = a.sign;
+   res.lead = __mult2set__( res.data, a.data, a.lead, b, 0 );
+
+}
+
 void jans::big_int::div( big_int & q, big_int & r, big_int & n, big_int & d ){
 
    // 0 <= r < d
@@ -110,7 +117,7 @@ void jans::big_int::div( big_int & q, big_int & r, big_int & n, big_int & d ){
       // - |n| = - d * ( return( q ) + 1 ) + ( d - return( r ) )
       if ( lr > 0 ){
          lr = __diff3set__( r.data, d.data, r.data );
-         lq = __plus_one__( q.data, lq );
+         lq = __sum1__( q.data, lq, 1 );
       }
       q.sign = ( ( lq > 0 ) ? false : true );
 
@@ -118,6 +125,31 @@ void jans::big_int::div( big_int & q, big_int & r, big_int & n, big_int & d ){
 
    q.lead = lq;
    r.lead = lr;
+
+}
+
+ubase_t jans::big_int::div( big_int & q, big_int & n, const ubase_t d ){
+
+   // 0 <= r < d
+
+   int lq = n.lead;
+   __copy__( q.data, n.data );
+   ubase_t rem = __divide__( q.data, lq, d );
+   q.sign = true;
+
+   if ( n.sign == false ){
+
+      // - |n| = - d * ( return( q ) + 1 ) + ( d - return( r ) )
+      if ( rem > 0 ){
+         rem = d - rem;
+         lq = __sum1__( q.data, lq, 1 );
+      }
+      q.sign = ( ( lq > 0 ) ? false : true );
+
+   }
+
+   q.lead = lq;
+   return rem;
 
 }
 

@@ -45,11 +45,11 @@ int jans::big_int::__sum3set__( ubase_t * r, ubase_t * a, const int la, ubase_t 
 
 }
 
-int jans::big_int::__plus_one__( ubase_t * r, const int lr ){
+int jans::big_int::__sum1__( ubase_t * r, const int lr, const ubase_t b ){
 
-   // r++
+   // r = r + b
 
-   ucarry_t z = 1;
+   ucarry_t z = b;
 
    int ir = 0;
    while ( ( ir < NUM_BLOCK ) && ( z != 0 ) ){
@@ -89,6 +89,33 @@ int jans::big_int::__diff3set__( ubase_t * r, ubase_t * a, ubase_t * b ){
    for ( int i = comp; i < NUM_BLOCK; i++ ){ r[ i ] = 0; } // Non-set part of the array is cleared here.
 
    for ( int i = comp; i > 0; i-- ){ if ( r[ i - 1 ] != 0 ){ return i; } }
+   return 0;
+
+}
+
+int jans::big_int::__diff1__( ubase_t * r, const ubase_t b ){
+
+   // r = r - b
+
+   ucarry_t add = 0;
+   ucarry_t sub = b; // serves as carry
+
+   int ir = 0;
+   while ( ( ir < NUM_BLOCK ) && ( sub != 0 ) ){
+      add = r[ ir ];
+      if ( add >= sub ){
+         r[ ir ] = ( add - sub );
+         sub = 0;
+      } else { // base > sub > add >= 0 --> base + add - sub > 0
+         r[ ir ] = ( ( add + ( ( ucarry_t )( 1UL ) << BLOCK_BIT ) ) - sub );
+         sub = 1;
+      }
+      ir++;
+   }
+
+   assert( sub == 0 ); // If sub != 0, while loop stopped because ( ir == NUM_BLOCK ): Overflow exception
+
+   for ( int i = NUM_BLOCK; i > 0; i-- ){ if ( r[ i - 1 ] != 0 ){ return i; } }
    return 0;
 
 }

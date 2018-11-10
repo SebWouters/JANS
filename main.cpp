@@ -24,16 +24,16 @@
 bool test1( const bool print ){
 
    std::string rsa_100_n_bin = "101100100011010101100110101111010001111100100000011010101100110111001001011011010001110010101111100100000101111110001110111111011110101011100001010100001110011010111101110010011011101101001111011111110111110110011001001000100111010001010101011101110000001011011101110001110001111010010100001110111101111100010111100101100011111011";
-   std::string rsa_100_p_bin = "110011111101111010100000111010110100110101010001111011000011000000000100110101001011001111101101100110011011110011100011000111100110101010000000111110010010011110111";
-   std::string rsa_100_q_bin = "110110110111100010100000111111001100011101110101101100001100110111100000000110110000000100010000000010110000010100101111101110101111010100000011111001101111100011101";
+   //std::string rsa_100_p_bin = "110011111101111010100000111010110100110101010001111011000011000000000100110101001011001111101101100110011011110011100011000111100110101010000000111110010010011110111";
+   //std::string rsa_100_q_bin = "110110110111100010100000111111001100011101110101101100001100110111100000000110110000000100010000000010110000010100101111101110101111010100000011111001101111100011101";
 
    std::string rsa_100_n_dec = "1522605027922533360535618378132637429718068114961380688657908494580122963258952897654000350692006139";
-   std::string rsa_100_p_dec = "37975227936943673922808872755445627854565536638199";
-   std::string rsa_100_q_dec = "40094690950920881030683735292761468389214899724061";
+   //std::string rsa_100_p_dec = "37975227936943673922808872755445627854565536638199";
+   //std::string rsa_100_q_dec = "40094690950920881030683735292761468389214899724061";
 
    std::string rsa_100_n_hex = "2c8d59af47c81ab3725b472be417e3bf7ab85439af726ed3dfdf66489d155dc0b771c7a50ef7c5e58fb";
-   std::string rsa_100_p_hex = "19fbd41d69aa3d86009a967db3379c63cd501f24f7";
-   std::string rsa_100_q_hex = "1b6f141f98eeb619bc0360220160a5f75ea07cdf1d";
+   //std::string rsa_100_p_hex = "19fbd41d69aa3d86009a967db3379c63cd501f24f7";
+   //std::string rsa_100_q_hex = "1b6f141f98eeb619bc0360220160a5f75ea07cdf1d";
 
    jans::big_int n1; n1.read( rsa_100_n_bin, 2  );
    jans::big_int n2; n2.read( rsa_100_n_dec, 10 );
@@ -111,13 +111,49 @@ bool test2( const bool print ){
 
 }
 
+bool test3( const bool print ){
+
+   std::string rsa_100_n_dec = "1522605027922533360535618378132637429718068114961380688657908494580122963258952897654000350692006139";
+   ubase_t p1 = 39949691;
+   ubase_t p2 = 41030921;
+   ubase_t p3 = 79 * p1;
+   ubase_t p4 = 43 * p2;
+
+   jans::big_int n;  n.read( rsa_100_n_dec, 10 );
+   jans::big_int m1; jans::big_int::prod( m1, n, p1 );
+   jans::big_int m2; jans::big_int::prod( m2, n, p2 );
+   jans::big_int s1;
+
+                jans::big_int::gcd( s1, m1, m2 ); const bool eq_s1 = jans::big_int::equal( n, s1 );
+   ubase_t s2 = jans::big_int::gcd( m1, p3 );     const bool eq_s2 = ( s2 == p1 );
+   ubase_t s3 = jans::big_int::gcd( m2, p4 );     const bool eq_s3 = ( s3 == p2 );
+   ubase_t s4 = jans::big_int::gcd( m1, p2 );     const bool eq_s4 = ( s4 == 1  );
+   ubase_t s5 = jans::big_int::gcd( m2, p1 );     const bool eq_s5 = ( s5 == 1  );
+
+   if ( print ){
+
+      std::cout << "Test3: GCD" << std::endl;
+      std::cout << "m1 = " << m1.write( 10 ) << std::endl;
+      std::cout << "m2 = " << m2.write( 10 ) << std::endl;
+      std::cout << "Equal(s1) = " << eq_s1 << std::endl;
+      std::cout << "Equal(s2) = " << eq_s2 << std::endl;
+      std::cout << "Equal(s3) = " << eq_s3 << std::endl;
+      std::cout << "Equal(s4) = " << eq_s4 << std::endl;
+      std::cout << "Equal(s5) = " << eq_s5 << std::endl;
+
+   }
+
+   return ( eq_s1 && eq_s2 && eq_s3 && eq_s4 && eq_s5 );
+
+}
+
 int main()
 {
 
    jans::big_int::sanity_check();
-   test1( true );
+   //test1( true );
    test2( true );
-   //test3();
+   test3( true );
 
    return 0;
 

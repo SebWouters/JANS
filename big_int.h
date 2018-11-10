@@ -53,15 +53,23 @@ namespace jans{
 
          static void sum( big_int & res, big_int & a, big_int & b );
 
+         //static void sum( big_int & res, big_int & a, const ubase_t b );
+
          static void diff( big_int & res, big_int & a, big_int & b );
+
+         //static void diff( big_int & res, big_int & a, const ubase_t b );
 
          static void prod( big_int & res, big_int & a, big_int & b );
 
+         static void prod( big_int & res, big_int & a, const ubase_t b );
+
          static void div( big_int & q, big_int & r, big_int & n, big_int & d );
+
+         static ubase_t div( big_int & q, big_int & n, const ubase_t d ); // Returns remainder
 
          static void gcd( big_int & res, big_int & a, big_int & b );
 
-         static ubase_t gcd( big_int & a, const ubase_t b );
+         static ubase_t gcd( big_int & a, const ubase_t b ); // Returns gcd( a, b )
 
          void shift_up( const int k );
 
@@ -112,11 +120,14 @@ namespace jans{
          // r = a + b; if (( r != a ) && ( r != b )){ __clear__( r ); }
          static int __sum3set__( ubase_t * r, ubase_t * a, const int la, ubase_t * b, const int lb );
 
-         // r++
-         static int __plus_one__( ubase_t * r, const int lr );
+         // r = r + b
+         static int __sum1__( ubase_t * r, const int lr, const ubase_t b );
 
          // r = a - b
          static int __diff3set__( ubase_t * r, ubase_t * a, ubase_t * b );
+
+         // r = r - b
+         static int __diff1__( ubase_t * r, const ubase_t b );
 
          // r = a * b; calls __clear__( r )
          static int __mult3set__( ubase_t * r, ubase_t * a, const int la, ubase_t * b, const int lb );
@@ -125,10 +136,10 @@ namespace jans{
          static int __mult3add__( ubase_t * r, const int lr, ubase_t * a, const int la, ubase_t * b, const int lb );
 
          // r[ shift : ] = a[ : ] * b; calls __clear__( r )
-         static int __mult2set__( ubase_t * r, ubase_t * a, const int la, const ubase_t b, const int shift = 0 );
+         static int __mult2set__( ubase_t * r, ubase_t * a, const int la, const ubase_t b, const int shift );
 
          // r[ shift : ] += b * a[ : ]; this would be lapack "axpy" with a shift
-         static int __mult2add__( ubase_t * r, const int lr, ubase_t * a, const int la, const ubase_t b, const int shift = 0 );
+         static int __mult2add__( ubase_t * r, const int lr, ubase_t * a, const int la, const ubase_t b, const int shift );
 
          // r = r * b
          static int __scal1__( ubase_t * r, const int lr, const ubase_t b );
