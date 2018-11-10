@@ -325,9 +325,10 @@ void jans::big_int::__divide__( ubase_t * q, int & lq, ubase_t * r, int & lr, ub
 
 }
 
-int jans::big_int::__gcd__( ubase_t * temp, ubase_t * a, const int la, ubase_t * b, const int lb ){
+int jans::big_int::__gcd__( ubase_t * res, ubase_t * a, const int la, ubase_t * b, const int lb ){
 
-   // Solves for temp = gcd( a, b ); a >= b; destroys a & b in the proces
+   // Solves for res = gcd( a, b ); a >= b; destroys a & b in the proces
+   // Euclidean algorithm
 
    ubase_t * al = a; int ll = la;
    ubase_t * as = b; int ls = lb;
@@ -335,13 +336,73 @@ int jans::big_int::__gcd__( ubase_t * temp, ubase_t * a, const int la, ubase_t *
 
    while ( ls != 0 ){
 
-      __divide__( temp, lq, al, ll, as, ls ); // al(in) = temp * as + al(out)
+      __divide__( res, lq, al, ll, as, ls ); // al(in) = temp * as + al(out)
       ubase_t * a_swap = al; al = as; as = a_swap;
             int l_swap = ll; ll = ls; ls = l_swap;
    }
 
-   __copy__( temp, al );
+   __copy__( res, al );
    return ll;
+
+}
+
+int jans::big_int::__ceil_sqrt__( ubase_t * d, ubase_t * num, const int ln ){
+
+   // Solves for d = ceil( sqrt( num ) )
+   // Babylonian method: x_new = ( x + N / x ) / 2
+
+   ubase_t q[ NUM_BLOCK ]; __clear__( q ); int lq = 0;
+   ubase_t r[ NUM_BLOCK ]; __clear__( r ); int lr = 0;
+                           __clear__( d ); int ld = 0;
+
+   // Guess the sqrt and put it in (d, ld)
+   {
+      int lb = 0;
+      for ( int j = 0; j < BLOCK_BIT; j++ ){
+         if ( ( num[ j ] >> j ) & 1UL ){ lb = j; }
+      }
+      lb = ( lb + BLOCK_BIT * ( ln - 1 ) ) / 2;
+      int id = lb / BLOCK_BIT;
+      int jd = lb - BLOCK_BIT * id;
+      d[ id ] = ( 1UL << jd );
+      ld = id + 1;
+   }
+
+   while ( true ){
+
+      lq = __mult3set__( q, d, ld, d, ld );     // q = d^2
+      const int comp1 = __compare__( q, num );
+      if ( comp1 == 0 ){ return ld; }
+      lq = __sum1__( q, lq, 1 );                // q = d^2 + 1
+      lr = __mult2set__( r, d, ld, 2, 0 );      // r = 2 * d
+
+      if ( comp1 > 0 ){                         // d^2 > num
+         lq = __diff3set__( q, q, r );          // q = ( d - 1 )^2
+         const int comp2 = __compare__( q, num );
+         if ( comp2 < 0 ){ return ld; }         // d^2 > num > ( d - 1 )^2
+         if ( comp2 == 0 ){                     // d^2 > num = ( d - 1 )^2
+            ld = __diff1__( d, 1 );
+            return ld;
+         }
+      }
+
+      if ( comp1 < 0 ){                         // d^2 < num
+         __sum3set__( q, q, lq, r, lr );        // q = ( d + 1 )^2
+         const int comp2 = __compare__( q, num );
+         if ( comp2 >= 0 ){                     // ( d + 1 )^2 >= num > d^2
+            ld = __sum1__( d, ld, 1 );
+            return ld;
+         }
+      }
+
+      __copy__( r, num );
+      lr = ln;
+      __divide__( q, lq, r, lr, d, ld );        // num = q * d + r
+      ld = __sum3set__( d, d, ld, q, lq );      // d = d_old + num / d_old
+      __shift_down__( d, 1 );                   // d_new = ( d_old + num / d_old ) / 2
+      ld = ( ( d[ ld - 1 ] > 0 ) ? ld : ( ld - 1 ) );
+
+   }
 
 }
 

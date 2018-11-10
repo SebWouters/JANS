@@ -18,6 +18,7 @@
 */
 
 #include "big_int.h"
+#include "sieve.h"
 #include <stdio.h>
 #include <iostream>
 
@@ -133,8 +134,8 @@ bool test3( const bool print ){
    if ( print ){
 
       std::cout << "Test3: GCD" << std::endl;
-      std::cout << "m1 = " << m1.write( 10 ) << std::endl;
-      std::cout << "m2 = " << m2.write( 10 ) << std::endl;
+      //std::cout << "m1 = " << m1.write( 10 ) << std::endl;
+      //std::cout << "m2 = " << m2.write( 10 ) << std::endl;
       std::cout << "Equal(s1) = " << eq_s1 << std::endl;
       std::cout << "Equal(s2) = " << eq_s2 << std::endl;
       std::cout << "Equal(s3) = " << eq_s3 << std::endl;
@@ -147,13 +148,41 @@ bool test3( const bool print ){
 
 }
 
+bool test4( const bool print ){
+
+   std::string rsa_100_n_dec = "1522605027922533360535618378132637429718068114961380688657908494580122963258952897654000350692006139";
+   std::string ceil_sqrt_n   = "39020571855401265512289573339484371018905006900195";
+   jans::big_int num; num.read( rsa_100_n_dec, 10 );
+   jans::big_int sol; sol.read( ceil_sqrt_n, 10 );
+   jans::big_int res;
+
+   jans::big_int::ceil_sqrt( res, num );
+   const bool eq = jans::big_int::equal( res, sol );
+
+   if ( print ){
+
+      std::cout << "Test3: Ceil sqrt" << std::endl;
+      std::cout << "Equal = " << eq << std::endl;
+
+   }
+
+   return eq;
+
+}
+
 int main()
 {
 
    jans::big_int::sanity_check();
    //test1( true );
-   test2( true );
-   test3( true );
+   //test2( true );
+   //test3( true );
+   //test4( true );
+
+   std::string n_test = "61421677127643670816789";
+   jans::big_int n; n.read( n_test, 10 );
+
+   jans::sieve mysieve( 2000, n ); // 100000 );
 
    return 0;
 

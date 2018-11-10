@@ -53,11 +53,7 @@ namespace jans{
 
          static void sum( big_int & res, big_int & a, big_int & b );
 
-         //static void sum( big_int & res, big_int & a, const ubase_t b );
-
          static void diff( big_int & res, big_int & a, big_int & b );
-
-         //static void diff( big_int & res, big_int & a, const ubase_t b );
 
          static void prod( big_int & res, big_int & a, big_int & b );
 
@@ -71,6 +67,8 @@ namespace jans{
 
          static ubase_t gcd( big_int & a, const ubase_t b ); // Returns gcd( a, b )
 
+         static void ceil_sqrt( big_int & res, big_int & n );
+
          void shift_up( const int k );
 
          void shift_down( const int k );
@@ -80,6 +78,8 @@ namespace jans{
          void read( const std::string number, const ubase_t base );
 
          std::string write( const ubase_t base ) const;
+
+         void copy( big_int & tocopy );
 
       private:
 
@@ -150,8 +150,11 @@ namespace jans{
          // Solves for n = q * d + r, with r < d; whereby initially (r, lr) contains (n, ln).
          static void __divide__( ubase_t * q, int & lq, ubase_t * r, int & lr, ubase_t * d, const int ld );
 
-         // Solves for temp = gcd( a, b ); a >= b; destroys a & b in the proces
-         static int __gcd__( ubase_t * temp, ubase_t * a, const int la, ubase_t * b, const int lb );
+         // Solves for res = gcd( a, b ); a >= b; destroys a & b in the proces
+         static int __gcd__( ubase_t * res, ubase_t * a, const int la, ubase_t * b, const int lb );
+
+         // Solves for d = ceil( sqrt( num ) )
+         static int __ceil_sqrt__( ubase_t * d, ubase_t * num, const int ln );
 
    };
 

@@ -31,6 +31,14 @@ jans::big_int::big_int(){
 
 }
 
+void jans::big_int::copy( big_int & tocopy ){
+
+   sign = tocopy.sign;
+   lead = tocopy.lead;
+   __copy__( data, tocopy.data );
+
+}
+
 jans::big_int::~big_int(){}
 
 void jans::big_int::sanity_check(){
@@ -193,6 +201,14 @@ ubase_t jans::big_int::gcd( big_int & a, const ubase_t b ){
    }
 
    return new_a;
+
+}
+
+void jans::big_int::ceil_sqrt( big_int & res, big_int & n ){
+
+   assert( n.sign );
+   res.sign = true;
+   res.lead = __ceil_sqrt__( res.data, n.data, n.lead );
 
 }
 

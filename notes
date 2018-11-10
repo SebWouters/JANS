@@ -1,8 +1,6 @@
 TODO
 ====
 
- * gcd (Euclidean algorithm): gcd(a,b) --> if b divides a, then b, else gcd(b,a mod b); not that often used in sieve
- * void jans::big_int::ceil_sqrt( N, sol ) --> Babylonian method: x_new = ( x + N / x ) / 2?
  * multiplication mod N; ( a * b ) mod N = ( a mod N * b mod N ) mod N, or is there something fancier?
  * modular multiplication (Kochanski, Montgomery)
 
