@@ -45,15 +45,33 @@ namespace jans{
 
          virtual ~big_int();
 
-         static bool equal( big_int & n1, big_int & n2 );
+         void copy( big_int & tocopy );
 
-         static int n_bits(){ return ( NUM_BLOCK * BLOCK_BIT ); }
+         void set( const ubase_t value );
 
-         static int n_blocks(){ return NUM_BLOCK; }
+         ubase_t get_blk( const int i ); // data[ i ]
+
+         void read( const std::string number, const ubase_t base );
+
+         std::string write( const ubase_t base ) const;
+
+         static bool equal( big_int & n1, big_int & n2 ); // ( n1 == n2 )
+
+         static bool equal( big_int & n1, const ubase_t n2 );
+
+         static bool smaller( big_int & n1, big_int & n2 ); // ( n1 < n2 )
+
+         static void sanity_check();
+
+         // Generic math operations
 
          static void sum( big_int & res, big_int & a, big_int & b );
 
+         static void sum( big_int & res, big_int & a, const ubase_t b );
+
          static void diff( big_int & res, big_int & a, big_int & b );
+
+         static void diff( big_int & res, big_int & a, const ubase_t b );
 
          static void prod( big_int & res, big_int & a, big_int & b );
 
@@ -63,29 +81,25 @@ namespace jans{
 
          static ubase_t div( big_int & q, big_int & n, const ubase_t d ); // Returns remainder
 
+         static double logarithm( big_int & x );
+
+         // Number theory operations
+
          static void gcd( big_int & res, big_int & a, big_int & b );
 
          static ubase_t gcd( big_int & a, const ubase_t b ); // Returns gcd( a, b )
 
          static void ceil_sqrt( big_int & res, big_int & n );
 
-         void shift_up( const int k );
+         static void xx_min_num( big_int & res, big_int & x, big_int & num );
 
-         void shift_down( const int k );
+         static ubase_t extract_pow_2( big_int & x );
 
-         static void sanity_check();
-
-         void read( const std::string number, const ubase_t base );
-
-         std::string write( const ubase_t base ) const;
-
-         void copy( big_int & tocopy );
+         static ubase_t extract_pow_p( big_int & x, const ubase_t p );
 
       private:
 
          ubase_t data[ NUM_BLOCK ];
-
-         bool sign;
 
          int lead; // Upper bound for loops over the blocks: lead = 1 + max{i}( data[ i ] != 0 )
 

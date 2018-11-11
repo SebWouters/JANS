@@ -28,15 +28,19 @@ namespace jans{
 
       public:
 
-         sieve( const ubase_t bound, big_int & num );
+         sieve( const ubase_t bound, jans::big_int & num );
 
          virtual ~sieve();
+
+         void run();
 
       private:
 
          ubase_t bound;
 
-         big_int target;
+         jans::big_int target; // N
+
+         // Factor base information
 
          int num_primes;
 
@@ -46,17 +50,41 @@ namespace jans{
 
          double * logval;
 
+         // Intermediate sieve results
+
+         int linspace; // minimum num_primes + 1, pref larger
+
+         int lincount;
+
+         jans::big_int * xvalues;
+
+         ubase_t * coeffic;
+
+         // Workspaces
+
+         ubase_t blk_size;
+
+         double grace;
+
+         // Helper funcionality
+
          void __startup__();
 
-         static int __legendre_symbol__( big_int & num, const ubase_t p );
+         static int __legendre_symbol__( jans::big_int & num, const ubase_t p );
 
          static int __legendre_symbol__( const ubase_t num, const ubase_t p );
 
          static ubase_t __power__( const ubase_t num, const ubase_t pow, const ubase_t mod );
 
-         static ubase_t __root_quadratic_residue__( big_int & num, const ubase_t p );
+         static ubase_t __root_quadratic_residue__( jans::big_int & num, const ubase_t p );
 
          static ubase_t __root_quadratic_residue__( const ubase_t num, const ubase_t p );
+
+         bool __extract__( big_int & x, ubase_t * powers ) const;
+
+         void __sieving_test_all__();
+
+         void __sieving_grace__();
 
    };
 

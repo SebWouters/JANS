@@ -44,7 +44,6 @@ void jans::big_int::read( const std::string number, const ubase_t base ){
    assert( ( base == 2 ) || ( base == 10 ) || ( base == 16 ) );
    __clear__( data );
    lead = 0;
-   sign = true;
 
    ubase_t shift[ NUM_BLOCK ];
    __clear__( shift );

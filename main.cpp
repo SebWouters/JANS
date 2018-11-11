@@ -183,6 +183,7 @@ int main()
    jans::big_int n; n.read( n_test, 10 );
 
    jans::sieve mysieve( 2000, n ); // 100000 );
+   mysieve.run();
 
    return 0;
 

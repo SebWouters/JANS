@@ -18,6 +18,7 @@
 */
 
 #include <assert.h>
+#include <math.h>
 #include <stdio.h>
 #include <iostream>
 
@@ -25,7 +26,6 @@
 
 jans::big_int::big_int(){
 
-   sign = true;
    lead = 0;
    __clear__( data );
 
@@ -33,9 +33,16 @@ jans::big_int::big_int(){
 
 void jans::big_int::copy( big_int & tocopy ){
 
-   sign = tocopy.sign;
    lead = tocopy.lead;
    __copy__( data, tocopy.data );
+
+}
+
+void jans::big_int::set( const ubase_t value ){
+
+   __clear__( data );
+   data[ 0 ] = value;
+   lead = ( ( value == 0 ) ? 0 : 1 );
 
 }
 
@@ -51,121 +58,85 @@ void jans::big_int::sanity_check(){
 
 bool jans::big_int::equal( big_int & n1, big_int & n2 ){
 
-   return ( ( n1.sign == n2.sign ) && ( n1.lead == n2.lead ) && ( __compare__( n1.data, n2.data ) == 0 ) );
+   return ( ( n1.lead == n2.lead ) && ( __compare__( n1.data, n2.data ) == 0 ) );
 
 }
 
-void jans::big_int::diff( big_int & res, big_int & a, big_int & b ){
+bool jans::big_int::equal( big_int & n1, const ubase_t n2 ){
 
-   const int comp = __compare__( a.data, b.data );
+   return ( ( n1.lead == 1 ) && ( n1.data[ 0 ] == n2 ) );
 
-   if ( ( a.sign == true  ) && ( b.sign == true  ) ){
-      if ( comp == 0 ){ res.sign = true;  res.lead = 0; __clear__( res.data ); }
-      if ( comp >  0 ){ res.sign = true;  res.lead = __diff3set__( res.data, a.data, b.data ); } // a - b =   ( |a| - |b| )
-      if ( comp <  0 ){ res.sign = false; res.lead = __diff3set__( res.data, b.data, a.data ); } // a - b = - ( |b| - |a| )
-   }
-   if ( ( a.sign == false ) && ( b.sign == false ) ){
-      if ( comp == 0 ){ res.sign = true;  res.lead = 0; __clear__( res.data ); }
-      if ( comp >  0 ){ res.sign = false; res.lead = __diff3set__( res.data, a.data, b.data ); } // a - b = - ( |a| - |b| )
-      if ( comp <  0 ){ res.sign = true;  res.lead = __diff3set__( res.data, b.data, a.data ); } // a - b =   ( |b| - |a| )
-   }
-   if ( ( a.sign == true  ) && ( b.sign == false ) ){ res.sign = true;  res.lead = __sum3set__( res.data, a.data, a.lead, b.data, b.lead ); }
-   if ( ( a.sign == false ) && ( b.sign == true  ) ){ res.sign = false; res.lead = __sum3set__( res.data, a.data, a.lead, b.data, b.lead ); }
+}
+
+bool jans::big_int::smaller( big_int & n1, big_int & n2 ){
+
+   return ( __compare__( n1.data, n2.data ) < 0 );
+
+}
+
+ubase_t jans::big_int::get_blk( const int i ){
+
+   return data[ i ];
 
 }
 
 void jans::big_int::sum( big_int & res, big_int & a, big_int & b ){
 
-   const int comp = __compare__( a.data, b.data );
+   res.lead = __sum3set__( res.data, a.data, a.lead, b.data, b.lead );
 
-   if ( ( a.sign == true  ) && ( b.sign == false ) ){
-      if ( comp == 0 ){ res.sign = true;  res.lead = 0; __clear__( res.data ); }
-      if ( comp >  0 ){ res.sign = true;  res.lead = __diff3set__( res.data, a.data, b.data ); } // a + b =   ( |a| - |b| )
-      if ( comp <  0 ){ res.sign = false; res.lead = __diff3set__( res.data, b.data, a.data ); } // a + b = - ( |b| - |a| )
-   }
-   if ( ( a.sign == false ) && ( b.sign == true  ) ){
-      if ( comp == 0 ){ res.sign = true;  res.lead = 0; __clear__( res.data ); }
-      if ( comp >  0 ){ res.sign = false; res.lead = __diff3set__( res.data, a.data, b.data ); } // a + b = - ( |a| - |b| )
-      if ( comp <  0 ){ res.sign = true;  res.lead = __diff3set__( res.data, b.data, a.data ); } // a + b =   ( |b| - |a| )
-   }
-   if ( ( a.sign == true  ) && ( b.sign == true  ) ){ res.sign = true;  res.lead = __sum3set__( res.data, a.data, a.lead, b.data, b.lead ); }
-   if ( ( a.sign == false ) && ( b.sign == false ) ){ res.sign = false; res.lead = __sum3set__( res.data, a.data, a.lead, b.data, b.lead ); }
+}
+
+void jans::big_int::sum( big_int & res, big_int & a, const ubase_t b ){
+
+   res.lead = a.lead;
+   __copy__( res.data, a.data );
+   res.lead = __sum1__( res.data, res.lead, b );
+
+}
+
+void jans::big_int::diff( big_int & res, big_int & a, big_int & b ){
+
+   res.lead = __diff3set__( res.data, a.data, b.data );
+
+}
+
+void jans::big_int::diff( big_int & res, big_int & a, const ubase_t b ){
+
+   __copy__( res.data, a.data );
+   res.lead = __diff1__( res.data, b );
 
 }
 
 void jans::big_int::prod( big_int & res, big_int & a, big_int & b ){
 
-   res.sign = !( a.sign != b.sign );
    res.lead = __mult3set__( res.data, a.data, a.lead, b.data, b.lead );
 
 }
 
 void jans::big_int::prod( big_int & res, big_int & a, const ubase_t b ){
 
-   res.sign = a.sign;
    res.lead = __mult2set__( res.data, a.data, a.lead, b, 0 );
 
 }
 
 void jans::big_int::div( big_int & q, big_int & r, big_int & n, big_int & d ){
 
-   // 0 <= r < d
-
-   assert( d.sign == true );
-
-   int lq = 0;
-   int lr = n.lead;
+   r.lead = n.lead;
    __copy__( r.data, n.data );
-   __divide__( q.data, lq, r.data, lr, d.data, d.lead );
-   q.sign = true;
-   r.sign = true;
-
-   if ( n.sign == false ){
-
-      // - |n| = - d * ( return( q ) + 1 ) + ( d - return( r ) )
-      if ( lr > 0 ){
-         lr = __diff3set__( r.data, d.data, r.data );
-         lq = __sum1__( q.data, lq, 1 );
-      }
-      q.sign = ( ( lq > 0 ) ? false : true );
-
-   }
-
-   q.lead = lq;
-   r.lead = lr;
+   __divide__( q.data, q.lead, r.data, r.lead, d.data, d.lead );
 
 }
 
 ubase_t jans::big_int::div( big_int & q, big_int & n, const ubase_t d ){
 
-   // 0 <= r < d
-
-   int lq = n.lead;
+   q.lead = n.lead;
    __copy__( q.data, n.data );
-   ubase_t rem = __divide__( q.data, lq, d );
-   q.sign = true;
-
-   if ( n.sign == false ){
-
-      // - |n| = - d * ( return( q ) + 1 ) + ( d - return( r ) )
-      if ( rem > 0 ){
-         rem = d - rem;
-         lq = __sum1__( q.data, lq, 1 );
-      }
-      q.sign = ( ( lq > 0 ) ? false : true );
-
-   }
-
-   q.lead = lq;
+   ubase_t rem = __divide__( q.data, q.lead, d );
    return rem;
 
 }
 
 void jans::big_int::gcd( big_int & res, big_int & a, big_int & b ){
-
-   assert( a.sign );
-   assert( b.sign );
-   res.sign = true;
 
    const int comp = __compare__( a.data, b.data );
    if ( comp == 0 ){ // a == b
@@ -184,7 +155,6 @@ void jans::big_int::gcd( big_int & res, big_int & a, big_int & b ){
 
 ubase_t jans::big_int::gcd( big_int & a, const ubase_t b ){
 
-   assert( a.sign );
    assert( ( a.lead > 1 ) || ( a.data[ 0 ] >= b ) );
 
    ubase_t cpy[ NUM_BLOCK ];
@@ -206,29 +176,73 @@ ubase_t jans::big_int::gcd( big_int & a, const ubase_t b ){
 
 void jans::big_int::ceil_sqrt( big_int & res, big_int & n ){
 
-   assert( n.sign );
-   res.sign = true;
    res.lead = __ceil_sqrt__( res.data, n.data, n.lead );
 
 }
 
-void jans::big_int::shift_up( const int k ){
+double jans::big_int::logarithm( big_int & x ){
 
-   __shift_up__( data, k );
-   lead = 0;
-   for ( int i = 0; i < NUM_BLOCK; i++ ){ if ( data[ i ] != 0 ){ lead = i + 1; } }
+   long double result = 0.0;
+   long double base   = 1.0;
+
+   for ( int i = 0; i < x.lead; i++ ){
+      result = result + ( base * x.data[ i ] );
+      base   = base * ( 1UL << BLOCK_BIT );
+   }
+
+   result = log( result );
+   return ( ( double )( result ) );
 
 }
 
-void jans::big_int::shift_down( const int k ){
+void jans::big_int::xx_min_num( big_int & res, big_int & x, big_int & num ){
 
-   __shift_down__( data, k );
-   lead = 0;
-   for ( int i = 0; i < NUM_BLOCK; i++ ){ if ( data[ i ] != 0 ){ lead = i + 1; } }
+   res.lead = __mult3set__( res.data, x.data, x.lead, x.data, x.lead );
+   res.lead = __diff3set__( res.data, res.data, num.data );
 
 }
 
+ubase_t jans::big_int::extract_pow_2( big_int & x ){
 
+   ubase_t power = 0;
+   for ( int ix = 0; ix < x.lead; ix++ ){
+      for ( int jx = 0; jx < BLOCK_BIT; jx++ ){
+         if ( ( x.data[ ix ] >> jx ) & 1U ){ ix = NUM_BLOCK; jx = BLOCK_BIT; }
+         else { power++; }
+      }
+   }
+   if ( power > 0 ){
+      __shift_down__( x.data, power );
+      x.lead = 0;
+      for ( int ix = 0; ix < NUM_BLOCK; ix++ ){ if ( x.data[ ix ] != 0 ){ x.lead = ( ix + 1 ); } }
+   }
+   return power;
+
+}
+
+ubase_t jans::big_int::extract_pow_p( big_int & x, const ubase_t p ){
+
+   if ( ( x.lead == 1 ) && ( x.data[ 0 ] == 1 ) ){ return 0; } // No powers to extract anymore
+
+   ubase_t pow = 0;
+   ubase_t rem = 0;
+
+   ubase_t work[ NUM_BLOCK ];
+   __copy__( work, x.data );
+   int lw = x.lead;
+
+   while ( ( rem == 0 ) && ( lw > 0 ) ){
+      rem = __divide__( work, lw, p );
+      if ( rem == 0 ){
+         pow++;
+         x.lead = lw;
+         __copy__( x.data, work );
+      }
+   }
+
+   return pow;
+
+}
 
 
 
