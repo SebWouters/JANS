@@ -64,6 +64,7 @@ bool jans::big_int::equal( big_int & n1, big_int & n2 ){
 
 bool jans::big_int::equal( big_int & n1, const ubase_t n2 ){
 
+   if ( n2 == 0 ){ return ( n1.lead == 0 ); }
    return ( ( n1.lead == 1 ) && ( n1.data[ 0 ] == n2 ) );
 
 }

@@ -32,7 +32,7 @@ namespace jans{
 
          virtual ~sieve();
 
-         void run();
+         void run( jans::big_int & p, jans::big_int & q );
 
       private:
 
@@ -58,7 +58,7 @@ namespace jans{
 
          jans::big_int * xvalues;
 
-         ubase_t * coeffic;
+         ubase_t * powers;
 
          // Workspaces
 
@@ -83,6 +83,10 @@ namespace jans{
          bool __extract__( big_int & x, ubase_t * powers ) const;
 
          void __sieving_grace__();
+
+         void __solve_gaussian__( unsigned char * helper );
+
+         void __factor__( unsigned char * helper, jans::big_int & p, jans::big_int & q );
 
    };
 

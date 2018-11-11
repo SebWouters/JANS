@@ -35,11 +35,11 @@ jans::sieve::sieve( const ubase_t bound, jans::big_int & num ){
    linspace = num_primes + 11;
    lincount = 0;
    xvalues  = new jans::big_int[ linspace ];
-   coeffic  = new ubase_t[ linspace * num_primes ];
-   for ( int cnt = 0; cnt < ( linspace * num_primes ); cnt++ ){ coeffic[ cnt ] = 0; }
+   powers   = new ubase_t[ linspace * num_primes ];
+   for ( int cnt = 0; cnt < ( linspace * num_primes ); cnt++ ){ powers[ cnt ] = 0; }
 
    blk_size = 100000; //10000000; // 76 MB doubles
-   grace    = 12.0;
+   grace    = 8.0;
 
 }
 
@@ -50,7 +50,7 @@ jans::sieve::~sieve(){
    delete [] logval;
 
    delete [] xvalues;
-   delete [] coeffic;
+   delete [] powers;
 
 }
 
@@ -123,9 +123,139 @@ void jans::sieve::__startup__(){
 
 }
 
-void jans::sieve::run(){
+void jans::sieve::run( jans::big_int & p, jans::big_int & q ){
 
    __sieving_grace__();
+   assert( lincount == linspace );
+
+   unsigned char * helper = new unsigned char[ ( linspace - num_primes ) * linspace ];
+
+   __solve_gaussian__( helper );
+   __factor__( helper, p, q );
+
+   delete [] helper;
+
+}
+
+void jans::sieve::__factor__( unsigned char * helper, jans::big_int & p, jans::big_int & q ){
+
+   int sol = 0;
+
+   jans::big_int x;
+   jans::big_int y;
+   jans::big_int work1;
+   jans::big_int work2;
+
+   while ( sol < linspace - num_primes ){
+
+      y.copy( 1 );
+
+      for ( int ip = 0; ip < num_primes; ip++ ){
+         ubase_t pow = 0;
+         for ( int vec = 0; vec < linspace; vec++ ){
+            if ( helper[ vec + linspace * sol ] == 1 ){ pow += powers[ ip + num_primes * vec ]; }
+         }
+         assert( pow % 2 == 0 );
+         pow = pow / 2;
+         for ( ubase_t it = 0; it < pow; it++ ){
+            jans::big_int::prod( work1, y, primes[ ip ] );
+            jans::big_int::div( work2, y, work1, target );
+         }
+      }
+
+      x.copy( 1 );
+
+      for ( int vec = 0; vec < linspace; vec++ ){
+         if ( helper[ vec + linspace * sol ] == 1 ){
+            jans::big_int::prod( work1, x, xvalues[ vec ] );
+            jans::big_int::div( work2, x, work1, target );
+         }
+      }
+
+      jans::big_int::diff( work2, target, y ); // work2 = -y mod N = N - y
+      if ( ( jans::big_int::equal( x, y ) == false ) && ( jans::big_int::equal( x, work2 ) == false ) ){
+
+         if ( jans::big_int::smaller( x, y ) ){
+            jans::big_int::diff( work1, y, x );
+            jans::big_int::gcd( work2, work1, target );
+         } else {
+            jans::big_int::diff( work1, x, y );
+            jans::big_int::gcd( work2, work1, target );
+         }
+
+         jans::big_int::div( work1, x, target, work2 );
+         assert( jans::big_int::equal( x, 0 ) ); // Remainder zero
+
+         if ( ! ( jans::big_int::equal( work1, 1 ) || ( jans::big_int::equal( work2, 1 ) ) ) ){
+
+            p.copy( work2 );
+            q.copy( work1 );
+            return;
+
+         }
+      }
+
+      sol++;
+   }
+
+   std::cout << "Increase number of additional smooth ( x * x - N ) to be found!" << std::endl;
+
+}
+
+void jans::sieve::__solve_gaussian__( unsigned char * helper ){
+
+   for ( int ip = 0; ip < linspace; ip++ ){ helper[ ip ] = 0; }
+
+   const int d_row = linspace;
+   const int d_col = num_primes;
+
+   unsigned char * matrix = new unsigned char[ d_row * ( d_col + d_row ) ];
+
+   for ( int row = 0; row < d_row; row++ ){
+      for ( int col = 0; col < ( d_col + d_row ); col++ ){
+         matrix[ row + d_row * col ] = 0;
+      }
+      matrix[ row + d_row * ( d_col + row ) ] = 1;
+   }
+
+   for ( int row = 0; row < d_row; row++ ){
+      for ( int col = 0; col < d_col; col++ ){
+         matrix[ row + d_row * col ] = powers[ col + d_col * row ] % 2;
+      }
+   }
+
+   int start_row = 0;
+   for ( int p = 0; p < d_col; p++ ){
+      bool found = false;
+      int iter = start_row;
+      while ( ( found == false ) && ( iter < d_row ) ){
+         if ( matrix[ iter + d_row * p ] == 1 ){ found = true; }
+         else { iter++; }
+      }
+      if ( found == true ){
+         if ( iter != start_row ){
+            for ( int col = 0; col < ( d_col + d_row ); col++ ){
+               matrix[ start_row + d_row * col ] = ( matrix[ iter + d_row * col ] + matrix[ start_row + d_row * col ] ) % 2;
+            }
+         }
+         for ( int row = start_row + 1; row < d_row; row++ ){
+            if ( matrix[ row + d_row * p ] == 1 ){
+               for ( int col = 0; col < ( d_col + d_row ); col++ ){
+                  matrix[ row + d_row * col ] = ( matrix[ row + d_row * col ] + matrix[ start_row + d_row * col ] ) % 2;
+               }
+            }
+         }
+         start_row++;
+      }
+   }
+
+   for ( int sol = 0; sol < ( d_row - d_col ); sol++ ){
+      for ( int col = 0; col < d_row; col++ ){
+         helper[ col + d_row * sol ] = matrix[ start_row + sol + d_row * ( d_col + col ) ];
+      }
+   }
+
+   delete [] matrix;
 
 }
 
@@ -140,7 +270,7 @@ void jans::sieve::__sieving_grace__(){
    double  * sumlog   = new  double[ blk_size   ];
    ubase_t * offset_p = new ubase_t[ num_primes ];
    ubase_t * offset_n = new ubase_t[ num_primes ];
-   ubase_t * powers   = new ubase_t[ num_primes ];
+   ubase_t * helper   = new ubase_t[ num_primes ];
 
    for ( int ip = 0; ip < num_primes; ip++ ){
 
@@ -190,13 +320,13 @@ void jans::sieve::__sieving_grace__(){
             count1++;
             jans::big_int::sum( work1, lower, cnt );
             jans::big_int::xx_min_num( work2, work1, target );
-            const bool smooth = __extract__( work2, powers );
+            const bool smooth = __extract__( work2, helper );
             if ( smooth ){
                count2++;
                xvalues[ lincount ].copy( work1 );
                std::cout << "Smooth ( x * x - N ) no. " << lincount << " for value x = " << xvalues[ lincount ].write( 10 ) << std::endl;
                for ( int ip = 0; ip < num_primes; ip++ ){
-                  coeffic[ lincount * num_primes + ip ] = powers[ ip ];
+                  powers[ lincount * num_primes + ip ] = helper[ ip ];
                }
                lincount++;
                if ( lincount == linspace ){ cnt = loopsize; }
@@ -215,7 +345,7 @@ void jans::sieve::__sieving_grace__(){
    delete [] sumlog;
    delete [] offset_p;
    delete [] offset_n;
-   delete [] powers;
+   delete [] helper;
 
 }
 
@@ -337,14 +467,17 @@ ubase_t jans::sieve::__root_quadratic_residue__( const ubase_t num, const ubase_
 
 }
 
-bool jans::sieve::__extract__( big_int & x, ubase_t * powers ) const{
+bool jans::sieve::__extract__( big_int & x, ubase_t * helper ) const{
 
    for ( int ip = 0; ip < num_primes; ip++ ){
-      powers[ ip ] = jans::big_int::extract_pow_p( x, primes[ ip ] );
+      helper[ ip ] = jans::big_int::extract_pow_p( x, primes[ ip ] );
+      if ( jans::big_int::equal( x, 1 ) ){
+         for ( int it = ip + 1; it < num_primes; it++ ){ helper[ it ] = 0; }
+         return true;
+      }
    }
 
-   const bool smooth = jans::big_int::equal( x, 1 );
-   return smooth;
+   return false;
 
 }
 

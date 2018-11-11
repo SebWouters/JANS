@@ -181,10 +181,18 @@ int main()
 
    std::string n_test = "61421677127643670816789";
    jans::big_int n; n.read( n_test, 10 );
+   jans::big_int p;
+   jans::big_int q;
 
    jans::sieve mysieve( 2000, n ); // 100000 );
-   mysieve.run();
+   mysieve.run( p, q );
+
+   std::cout << "Given n = p x q with" << std::endl;
+   std::cout << "      n = " << n.write( 10 ) << std::endl;
+   std::cout << "      p = " << p.write( 10 ) << std::endl;
+   std::cout << "      q = " << q.write( 10 ) << std::endl;
 
    return 0;
 
 }
+
