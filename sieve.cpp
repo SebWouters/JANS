@@ -154,7 +154,7 @@ ubase_t jans::sieve::__power__( const ubase_t num, const ubase_t pow, const ubas
       if ( ( pow >> j ) & 1U ){ res = ( res * temp ) % mod; }
       temp = ( temp * temp ) % mod;
    }
-   return res;
+   return ( ( ubase_t )( res ) );
 
 }
 
@@ -169,7 +169,6 @@ ubase_t jans::sieve::__root_quadratic_residue__( big_int & num, const ubase_t p 
 ubase_t jans::sieve::__root_quadratic_residue__( const ubase_t num, const ubase_t p ){
 
    // Tonelli–Shanks
-   // https://ipfs.io/ipfs/QmXoypizjW3WknFiJnKLwHCnL72vedxjQkDDP1mXWo6uco/wiki/Tonelli%E2%80%93Shanks_algorithm.html
 
    const ubase_t rem = num % p;
 
@@ -191,45 +190,41 @@ ubase_t jans::sieve::__root_quadratic_residue__( const ubase_t num, const ubase_
       leg_sym = __legendre_symbol__( z, p );
    }
 
-   ubase_t c = __power__(   z, Q, p );
-   ubase_t t = __power__( rem, Q, p );
    ubase_t M = S;
-   ubase_t R = __power__( rem, ( Q + 1 ) / 2, p );
+   ubase_t c = __power__(   z, Q, p );             // c^{2^{M-1}} = z^{(p-1)/2} = -1 mod p
+   ubase_t t = __power__( rem, Q, p );             // t^{2^{M-1}} = n^{(p-1)/2} = +1 mod p
+   ubase_t R = __power__( rem, ( Q + 1 ) / 2, p ); // R^2 = n.t mod p
 
    while ( t != 1 ){
 
+      /*
+          Find min. 0 < i < M so that t^{2^i} mod p = 1
+          Guaranteed to exist: - while loop condition
+                               - t^{2^{M-1}} = +1 mod p
+      */
       ubase_t i = 0;
       ucarry_t b = t;
       while ( ( b != 1 ) && ( i < M ) ){
-         b = ( b * b ) % p;
          i++;
+         b = ( b * b ) % p; // t^{2^i} mod p
       }
-      assert( i < M );
 
+      // Calculate c^{2^{M-i-1}} mod p
       ubase_t j = 0;
       b = c;
       while ( j < M - i - 1 ){
-         b = ( b * b ) % p; // c^{2^j}
          j++;
+         b = ( b * b ) % p; // c^{2^j} mod p
       }
 
-      R = ( R * b ) % p;
-      t = ( ( ( t * b ) % p ) * b ) % p;
-      c = ( b * b ) % p;
-      M = i;
+      M = i;                             // M decreases each iteration!
+      c = ( b * b ) % p;                 // c'^{2^{M'-1}} =   (b^2)^{2^{i-1}} = c^{2^{M-1}}             = -1   mod p
+      t = ( ( ( t * b ) % p ) * b ) % p; // t'^{2^{M'-1}} = (t.b^2)^{2^{i-1}} = t^{2^{i-1}}.c^{2^{M-1}} = +1   mod p
+      R = ( R * b ) % p;                 // R'^2          = (R.b)^2           = n.t.b^2                 = n.t' mod p
 
    }
 
-   ucarry_t test = R;
-   test = ( test * test ) % p;
-   assert( test == rem );
    return R;
 
 }
-
-
-
-
-
-
 
