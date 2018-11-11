@@ -38,7 +38,7 @@ void jans::big_int::copy( big_int & tocopy ){
 
 }
 
-void jans::big_int::set( const ubase_t value ){
+void jans::big_int::copy( const ubase_t value ){
 
    __clear__( data );
    data[ 0 ] = value;
@@ -202,27 +202,9 @@ void jans::big_int::xx_min_num( big_int & res, big_int & x, big_int & num ){
 
 }
 
-ubase_t jans::big_int::extract_pow_2( big_int & x ){
-
-   ubase_t power = 0;
-   for ( int ix = 0; ix < x.lead; ix++ ){
-      for ( int jx = 0; jx < BLOCK_BIT; jx++ ){
-         if ( ( x.data[ ix ] >> jx ) & 1U ){ ix = NUM_BLOCK; jx = BLOCK_BIT; }
-         else { power++; }
-      }
-   }
-   if ( power > 0 ){
-      __shift_down__( x.data, power );
-      x.lead = 0;
-      for ( int ix = 0; ix < NUM_BLOCK; ix++ ){ if ( x.data[ ix ] != 0 ){ x.lead = ( ix + 1 ); } }
-   }
-   return power;
-
-}
-
 ubase_t jans::big_int::extract_pow_p( big_int & x, const ubase_t p ){
 
-   if ( ( x.lead == 1 ) && ( x.data[ 0 ] == 1 ) ){ return 0; } // No powers to extract anymore
+   if ( equal( x, 1 ) ){ return 0; } // No powers to extract anymore
 
    ubase_t pow = 0;
    ubase_t rem = 0;

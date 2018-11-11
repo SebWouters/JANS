@@ -125,51 +125,7 @@ void jans::sieve::__startup__(){
 
 void jans::sieve::run(){
 
-   //__sieving_test_all__();
    __sieving_grace__();
-
-}
-
-void jans::sieve::__sieving_test_all__(){
-
-   jans::big_int work1; jans::big_int::prod( work1, target, 2 ); // 2N
-   jans::big_int work2;
-   jans::big_int lower; jans::big_int::ceil_sqrt( lower, target ); // ceil( sqrt( N ) )
-   jans::big_int upper;
-   jans::big_int limit; jans::big_int::ceil_sqrt( limit, work1 ); // ceil( sqrt( 2N ) )
-
-   ubase_t * powers = new ubase_t[ num_primes ];
-
-   jans::big_int::sum( upper, lower, blk_size );
-   if ( jans::big_int::smaller( upper, limit ) == false ){ upper.copy( limit ); }
-
-   while ( ( lincount < linspace ) && ( jans::big_int::smaller( lower, limit ) ) ){
-
-      jans::big_int::diff( work1, upper, lower );
-      const ubase_t loopsize = work1.get_blk( 0 );
-
-      for ( ubase_t cnt = 0; cnt < loopsize; cnt++ ){
-         jans::big_int::sum( work1, lower, cnt );
-         jans::big_int::xx_min_num( work2, work1, target );
-         const bool smooth = __extract__( work2, powers );
-         if ( smooth ){
-            xvalues[ lincount ].copy( work1 );
-            std::cout << "Smooth ( x * x - N ) no. " << lincount << " for value x = " << xvalues[ lincount ].write( 10 ) << std::endl;
-            for ( int ip = 0; ip < num_primes; ip++ ){
-               coeffic[ lincount * num_primes + ip ] = powers[ ip ];
-            }
-            lincount++;
-            if ( lincount == linspace ){ cnt = loopsize; }
-         }
-      }
-
-      lower.copy( upper );
-      jans::big_int::sum( upper, lower, blk_size );
-      if ( jans::big_int::smaller( upper, limit ) == false ){ upper.copy( limit ); }
-
-   }
-
-   delete [] powers;
 
 }
 
@@ -383,9 +339,7 @@ ubase_t jans::sieve::__root_quadratic_residue__( const ubase_t num, const ubase_
 
 bool jans::sieve::__extract__( big_int & x, ubase_t * powers ) const{
 
-   powers[ 0 ] = jans::big_int::extract_pow_2( x );
-
-   for ( int ip = 1; ip < num_primes; ip++ ){
+   for ( int ip = 0; ip < num_primes; ip++ ){
       powers[ ip ] = jans::big_int::extract_pow_p( x, primes[ ip ] );
    }
 

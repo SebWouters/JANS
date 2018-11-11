@@ -47,7 +47,7 @@ namespace jans{
 
          void copy( big_int & tocopy );
 
-         void set( const ubase_t value );
+         void copy( const ubase_t value );
 
          ubase_t get_blk( const int i ); // data[ i ]
 
@@ -92,8 +92,6 @@ namespace jans{
          static void ceil_sqrt( big_int & res, big_int & n );
 
          static void xx_min_num( big_int & res, big_int & x, big_int & num );
-
-         static ubase_t extract_pow_2( big_int & x );
 
          static ubase_t extract_pow_p( big_int & x, const ubase_t p );
 

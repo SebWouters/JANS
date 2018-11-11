@@ -82,8 +82,6 @@ namespace jans{
 
          bool __extract__( big_int & x, ubase_t * powers ) const;
 
-         void __sieving_test_all__();
-
          void __sieving_grace__();
 
    };
