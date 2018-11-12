@@ -28,11 +28,11 @@ namespace jans{
 
       public:
 
-         sieve( const ubase_t bound, jans::big_int & num );
+         sieve( const ubase_t bound, jans::big_int & num, const int extra );
 
          virtual ~sieve();
 
-         void run( jans::big_int & p, jans::big_int & q );
+         void run( jans::big_int & p, jans::big_int & q, const int blk_size, const double grace );
 
       private:
 
@@ -52,19 +52,15 @@ namespace jans{
 
          // Intermediate sieve results
 
-         int linspace; // minimum num_primes + 1, pref larger
+         int extra_sz;
+
+         int linspace; // num_primes + extra_sz
 
          int lincount;
 
          jans::big_int * xvalues;
 
          ubase_t * powers;
-
-         // Workspaces
-
-         ubase_t blk_size;
-
-         double grace;
 
          // Helper funcionality
 
@@ -82,7 +78,7 @@ namespace jans{
 
          bool __extract__( big_int & x, ubase_t * powers ) const;
 
-         void __sieving_grace__();
+         void __sieving_grace__( const int blk_size, const double grace );
 
          void __solve_gaussian__( unsigned char * helper );
 

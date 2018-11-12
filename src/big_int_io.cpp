@@ -18,8 +18,6 @@
 */
 
 #include <assert.h>
-//#include <stdio.h>
-//#include <iostream>
 
 #include "big_int.h"
 

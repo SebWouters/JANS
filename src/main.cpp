@@ -173,7 +173,15 @@ bool test4( const bool print ){
 int main()
 {
 
+   const int factor   = 1024 / BASE_UNIT; // big_int contains factor * BASE_UNIT bits
+   const int bvalue   = 2000;
+   const int blk_size = 100000; //10000000; // 76 MB doubles
+   const double grace = 8.0;
+   const int extra_sz = 11; // min. 1, liefst 11
+
+   jans::big_int::set_num_block( factor );
    jans::big_int::sanity_check();
+
    //test1( true );
    //test2( true );
    //test3( true );
@@ -184,8 +192,8 @@ int main()
    jans::big_int p;
    jans::big_int q;
 
-   jans::sieve mysieve( 2000, n ); // 100000 );
-   mysieve.run( p, q );
+   jans::sieve mysieve( bvalue, n, extra_sz );
+   mysieve.run( p, q, blk_size, grace );
 
    std::cout << "Given n = p x q with" << std::endl;
    std::cout << "      n = " << n.write( 10 ) << std::endl;

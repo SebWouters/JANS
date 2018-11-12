@@ -19,15 +19,24 @@
 
 #include <assert.h>
 #include <math.h>
-#include <stdio.h>
-#include <iostream>
 
 #include "big_int.h"
+
+int jans::big_int::NUM_BLOCK = 0;
+
+bool jans::big_int::nb_set = false;
 
 jans::big_int::big_int(){
 
    lead = 0;
+   data = new ubase_t[ NUM_BLOCK ];
    __clear__( data );
+
+}
+
+jans::big_int::~big_int(){
+
+   delete [] data;
 
 }
 
@@ -46,13 +55,17 @@ void jans::big_int::copy( const ubase_t value ){
 
 }
 
-jans::big_int::~big_int(){}
-
 void jans::big_int::sanity_check(){
 
-   std::cout << "num_bits(ubase_t)  = " << sizeof(ubase_t)  * CHAR_BIT << std::endl;
-   std::cout << "num_bits(ucarry_t) = " << sizeof(ucarry_t) * CHAR_BIT << std::endl;
-   assert( sizeof(ucarry_t) > sizeof(ubase_t) );
+   assert( sizeof( ucarry_t ) >= 2 * sizeof( ubase_t ) );
+
+}
+
+void jans::big_int::set_num_block( const int factor ){
+
+   assert( nb_set == false );
+   NUM_BLOCK = ( ( factor * BASE_UNIT ) / BLOCK_BIT );
+   nb_set = true;
 
 }
 
@@ -205,7 +218,7 @@ void jans::big_int::xx_min_num( big_int & res, big_int & x, big_int & num ){
 
 ubase_t jans::big_int::extract_pow_p( big_int & x, const ubase_t p ){
 
-   if ( equal( x, 1 ) ){ return 0; } // No powers to extract anymore
+   assert( p > 1 );
 
    ubase_t pow = 0;
    ubase_t rem = 0;
@@ -226,6 +239,4 @@ ubase_t jans::big_int::extract_pow_p( big_int & x, const ubase_t p ){
    return pow;
 
 }
-
-
 

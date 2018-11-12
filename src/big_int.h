@@ -26,14 +26,10 @@
 #define ubase_t  unsigned int
 #define ucarry_t unsigned long long
 
-#define BLOCK_BIT ( sizeof(unsigned int) * CHAR_BIT )
-#define NUM_BLOCK ( 1024 / BLOCK_BIT )
+#define BLOCK_BIT ( sizeof( unsigned int ) * CHAR_BIT )
+#define BASE_UNIT 256
 
-#define __11111111__ ( ~((unsigned int)(0)) )
-
-//#define SET_BIT(A,k) (   A[ ( ( k ) / ( sizeof(unsigned int) * CHAR_BIT ) ) ] |=  ( 1U << ( ( k ) % ( sizeof(unsigned int) * CHAR_BIT ) ) ) )
-//#define DEL_BIT(A,k) (   A[ ( ( k ) / ( sizeof(unsigned int) * CHAR_BIT ) ) ] &= ~( 1U << ( ( k ) % ( sizeof(unsigned int) * CHAR_BIT ) ) ) )
-//#define GET_BIT(A,k) ( ( A[ ( ( k ) / ( sizeof(unsigned int) * CHAR_BIT ) ) ] >>          ( ( k ) % ( sizeof(unsigned int) * CHAR_BIT ) ) ) & 1U )
+#define __11111111__ ( ~( ( unsigned int )( 0 ) ) )
 
 namespace jans{
 
@@ -62,6 +58,8 @@ namespace jans{
          static bool smaller( big_int & n1, big_int & n2 ); // ( n1 < n2 )
 
          static void sanity_check();
+
+         static void set_num_block( const int factor );
 
          // Generic math operations
 
@@ -97,9 +95,13 @@ namespace jans{
 
       private:
 
-         ubase_t data[ NUM_BLOCK ];
+         ubase_t * data;
 
          int lead; // Upper bound for loops over the blocks: lead = 1 + max{i}( data[ i ] != 0 )
+
+         static int NUM_BLOCK;
+
+         static bool nb_set;
 
          /******************************
           *  Private static functions  *

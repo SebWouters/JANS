@@ -25,21 +25,19 @@
 
 #include "sieve.h"
 
-jans::sieve::sieve( const ubase_t bound, jans::big_int & num ){
+jans::sieve::sieve( const ubase_t bound, jans::big_int & num, const int extra ){
 
    this->bound = bound;
    target.copy( num );
 
    __startup__();
 
-   linspace = num_primes + 11;
+   extra_sz = extra;
+   linspace = num_primes + extra_sz;
    lincount = 0;
    xvalues  = new jans::big_int[ linspace ];
    powers   = new ubase_t[ linspace * num_primes ];
    for ( int cnt = 0; cnt < ( linspace * num_primes ); cnt++ ){ powers[ cnt ] = 0; }
-
-   blk_size = 100000; //10000000; // 76 MB doubles
-   grace    = 8.0;
 
 }
 
@@ -123,12 +121,12 @@ void jans::sieve::__startup__(){
 
 }
 
-void jans::sieve::run( jans::big_int & p, jans::big_int & q ){
+void jans::sieve::run( jans::big_int & p, jans::big_int & q, const int blk_size, const double grace ){
 
-   __sieving_grace__();
+   __sieving_grace__( blk_size, grace );
    assert( lincount == linspace );
 
-   unsigned char * helper = new unsigned char[ ( linspace - num_primes ) * linspace ];
+   unsigned char * helper = new unsigned char[ extra_sz * linspace ];
 
    __solve_gaussian__( helper );
    __factor__( helper, p, q );
@@ -146,7 +144,7 @@ void jans::sieve::__factor__( unsigned char * helper, jans::big_int & p, jans::b
    jans::big_int work1;
    jans::big_int work2;
 
-   while ( sol < linspace - num_primes ){
+   while ( sol < extra_sz ){
 
       y.copy( 1 );
 
@@ -204,8 +202,6 @@ void jans::sieve::__factor__( unsigned char * helper, jans::big_int & p, jans::b
 
 void jans::sieve::__solve_gaussian__( unsigned char * helper ){
 
-   for ( int ip = 0; ip < linspace; ip++ ){ helper[ ip ] = 0; }
-
    const int d_row = linspace;
    const int d_col = num_primes;
 
@@ -259,7 +255,7 @@ void jans::sieve::__solve_gaussian__( unsigned char * helper ){
 
 }
 
-void jans::sieve::__sieving_grace__(){
+void jans::sieve::__sieving_grace__( const int blk_size, const double grace ){
 
    jans::big_int work1; jans::big_int::prod( work1, target, 2 ); // 2N
    jans::big_int work2;
