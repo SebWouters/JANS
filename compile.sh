@@ -1,5 +1,5 @@
-#g++ -O3 -march=native -flto\
-g++ -g\
+#g++ -g
+g++ -O3 -march=native -flto\
     src/main.cpp\
     src/big_int.cpp\
     src/big_int_math.cpp\
