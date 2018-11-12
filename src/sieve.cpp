@@ -308,14 +308,14 @@ void jans::sieve::__sieving_grace__( const int blk_size, const double grace ){
          offset_n[ ip ] = idx - loopsize;
       }
 
-      const double reference = jans::big_int::logarithm( lower ) - grace;
       int count1 = 0;
       int count2 = 0;
       for ( ubase_t cnt = 0; cnt < loopsize; cnt++ ){
+         jans::big_int::sum( work1, lower, cnt );
+         jans::big_int::xx_min_num( work2, work1, target );
+         const double reference = jans::big_int::logarithm( work2 ) - grace;
          if ( sumlog[ cnt ] > reference ){
             count1++;
-            jans::big_int::sum( work1, lower, cnt );
-            jans::big_int::xx_min_num( work2, work1, target );
             const bool smooth = __extract__( work2, helper );
             if ( smooth ){
                count2++;

@@ -17,10 +17,12 @@
    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
-#include "big_int.h"
-#include "sieve.h"
+#include <math.h>
 #include <stdio.h>
 #include <iostream>
+
+#include "big_int.h"
+#include "sieve.h"
 
 bool test1( const bool print ){
 
@@ -174,7 +176,7 @@ int main()
 {
 
    const int factor   = 1024 / BASE_UNIT; // big_int contains factor * BASE_UNIT bits
-   const int bvalue   = 2000;
+   const int bvalue   = 1350;
    const int blk_size = 100000; //10000000; // 76 MB doubles
    const double grace = 8.0;
    const int extra_sz = 11; // min. 1, liefst 11
@@ -191,6 +193,10 @@ int main()
    jans::big_int n; n.read( n_test, 10 );
    jans::big_int p;
    jans::big_int q;
+
+   const double ln_n  = jans::big_int::logarithm( n );
+   const int opt_bval = ceil( exp( 0.5 * sqrt( ln_n * log( ln_n ) ) ) );
+   std::cout << "Optimal B = " << opt_bval << std::endl;
 
    jans::sieve mysieve( bvalue, n, extra_sz );
    mysieve.run( p, q, blk_size, grace );
