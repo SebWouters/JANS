@@ -175,11 +175,11 @@ bool test4( const bool print ){
 int main()
 {
 
-   const int factor   = 1024 / BASE_UNIT; // big_int contains factor * BASE_UNIT bits
-   const int bvalue   = 1350;
-   const int blk_size = 100000; //10000000; // 76 MB doubles
-   const double grace = 8.0;
-   const int extra_sz = 11; // min. 1, liefst 11
+   const int     factor   = 1024 / BASE_UNIT; // big_int contains factor * BASE_UNIT bits
+   const int     bvalue   = 1350;
+   const ubase_t blk_size = 100000; //10000000; // 76 MB doubles
+   const double  grace    = 8.0;
+   const int     extra_sz = 11; // min. 1, liefst 11
 
    jans::big_int::set_num_block( factor );
    jans::big_int::sanity_check();

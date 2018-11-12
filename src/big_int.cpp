@@ -88,6 +88,13 @@ bool jans::big_int::smaller( big_int & n1, big_int & n2 ){
 
 }
 
+bool jans::big_int::smaller( big_int & n1, const ubase_t n2 ){
+
+   if ( n1.lead > 1 ){ return false; }
+   return ( n1.data[ 0 ] < n2 );
+
+}
+
 ubase_t jans::big_int::get_blk( const int i ){
 
    return data[ i ];
@@ -225,6 +232,13 @@ void jans::big_int::xx_min_num( big_int & res, big_int & x, big_int & num ){
 
    res.lead = __mult3set__( res.data, x.data, x.lead, x.data, x.lead );
    res.lead = __diff3set__( res.data, res.data, num.data );
+
+}
+
+void jans::big_int::min_xx_plus_num( big_int & res, big_int & x, big_int & num ){
+
+   res.lead = __mult3set__( res.data, x.data, x.lead, x.data, x.lead );
+   res.lead = __diff3set__( res.data, num.data, res.data );
 
 }
 

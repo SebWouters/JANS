@@ -57,6 +57,8 @@ namespace jans{
 
          static bool smaller( big_int & n1, big_int & n2 ); // ( n1 < n2 )
 
+         static bool smaller( big_int & n1, const ubase_t n2 );
+
          static void sanity_check();
 
          static void set_num_block( const int factor );
@@ -94,6 +96,8 @@ namespace jans{
          static void ceil_sqrt( big_int & res, big_int & n );
 
          static void xx_min_num( big_int & res, big_int & x, big_int & num );
+
+         static void min_xx_plus_num( big_int & res, big_int & x, big_int & num );
 
          static ubase_t extract_pow_p( big_int & x, const ubase_t p );
 

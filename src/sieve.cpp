@@ -33,11 +33,12 @@ jans::sieve::sieve( const ubase_t bound, jans::big_int & num, const int extra ){
    __startup__();
 
    extra_sz = extra;
-   linspace = num_primes + extra_sz;
+   powspace = num_primes + 1; // Positive and negative Q(x)
+   linspace = powspace + extra_sz;
    lincount = 0;
    xvalues  = new jans::big_int[ linspace ];
-   powers   = new ubase_t[ linspace * num_primes ];
-   for ( int cnt = 0; cnt < ( linspace * num_primes ); cnt++ ){ powers[ cnt ] = 0; }
+   powers   = new ubase_t[ linspace * powspace ];
+   for ( int cnt = 0; cnt < ( linspace * powspace ); cnt++ ){ powers[ cnt ] = 0; }
 
 }
 
@@ -121,7 +122,7 @@ void jans::sieve::__startup__(){
 
 }
 
-void jans::sieve::run( jans::big_int & p, jans::big_int & q, const int blk_size, const double grace ){
+void jans::sieve::run( jans::big_int & p, jans::big_int & q, const ubase_t blk_size, const double grace ){
 
    __sieving_grace__( blk_size, grace );
    assert( lincount == linspace );
@@ -151,7 +152,7 @@ void jans::sieve::__factor__( unsigned char * helper, jans::big_int & p, jans::b
       for ( int ip = 0; ip < num_primes; ip++ ){
          ubase_t pow = 0;
          for ( int vec = 0; vec < linspace; vec++ ){
-            if ( helper[ vec + linspace * sol ] == 1 ){ pow += powers[ ip + num_primes * vec ]; }
+            if ( helper[ vec + linspace * sol ] == 1 ){ pow += powers[ 1 + ip + powspace * vec ]; }
          }
          assert( pow % 2 == 0 );
          pow = pow / 2;
@@ -200,10 +201,10 @@ void jans::sieve::__factor__( unsigned char * helper, jans::big_int & p, jans::b
 
 }
 
-void jans::sieve::__solve_gaussian__( unsigned char * helper ){
+void jans::sieve::__solve_gaussian__( unsigned char * helper ) const{
 
    const int d_row = linspace;
-   const int d_col = num_primes;
+   const int d_col = powspace;
 
    unsigned char * matrix = new unsigned char[ d_row * ( d_col + d_row ) ];
 
@@ -255,94 +256,156 @@ void jans::sieve::__solve_gaussian__( unsigned char * helper ){
 
 }
 
-void jans::sieve::__sieving_grace__( const int blk_size, const double grace ){
+void jans::sieve::__sieving_grace__( const ubase_t blk_size, const double grace ){
 
    jans::big_int work1; jans::big_int::prod( work1, target, 2 ); // 2N
    jans::big_int work2;
-   jans::big_int lower; jans::big_int::ceil_sqrt( lower, target ); // ceil( sqrt( N ) )
-   jans::big_int upper;
-   jans::big_int limit; jans::big_int::ceil_sqrt( limit, work1 ); // ceil( sqrt( 2N ) )
+   jans::big_int lower_up; jans::big_int::ceil_sqrt( lower_up, target ); // ceil( sqrt( N ) )
+   jans::big_int upper_up;
+   jans::big_int limit_up; jans::big_int::ceil_sqrt( limit_up, work1 ); // ceil( sqrt( 2N ) )
+   jans::big_int upper_dn; upper_dn.copy( lower_up ); jans::big_int::minus1( upper_dn ); // ceil( sqrt( N ) ) - 1
+   jans::big_int lower_dn;
 
-   double  * sumlog   = new  double[ blk_size   ];
-   ubase_t * offset_p = new ubase_t[ num_primes ];
-   ubase_t * offset_n = new ubase_t[ num_primes ];
-   ubase_t * helper   = new ubase_t[ num_primes ];
+   double  * sumlog    = new  double[ blk_size   ];
+   ubase_t * shift1_up = new ubase_t[ num_primes ];
+   ubase_t * shift2_up = new ubase_t[ num_primes ];
+   ubase_t * shift1_dn = new ubase_t[ num_primes ];
+   ubase_t * shift2_dn = new ubase_t[ num_primes ];
+   ubase_t * helper    = new ubase_t[ num_primes ];
 
    for ( int ip = 0; ip < num_primes; ip++ ){
-
       ubase_t pri = primes[ ip ];
-      ubase_t rem = jans::big_int::div( work1, lower, pri ); // ceil( sqrt( N ) ) % p
-      ubase_t pos =     pri + roots[ ip ] - rem; while( pos >= pri ){ pos -= pri; } offset_p[ ip ] = pos;
-      ubase_t neg = 2 * pri - roots[ ip ] - rem; while( neg >= pri ){ neg -= pri; } offset_n[ ip ] = neg;
-
+      ubase_t rem = jans::big_int::div( work1, lower_up, pri ); // ceil( sqrt( N ) ) % p
+      ubase_t pos =     pri + roots[ ip ] - rem; while( pos >= pri ){ pos -= pri; }
+      ubase_t neg = 2 * pri - roots[ ip ] - rem; while( neg >= pri ){ neg -= pri; }
+      shift1_up[ ip ] = pos;
+      shift2_up[ ip ] = neg;
+      shift1_dn[ ip ] = pri - pos - 1;
+      shift2_dn[ ip ] = pri - neg - 1;
    }
 
-   jans::big_int::sum( upper, lower, blk_size );
-   if ( jans::big_int::smaller( upper, limit ) == false ){ upper.copy( limit ); }
+   jans::big_int::sum( upper_up, lower_up, blk_size );
+   if ( jans::big_int::smaller( upper_up, limit_up ) == false ){ upper_up.copy( limit_up ); }
 
-   while ( ( lincount < linspace ) && ( jans::big_int::smaller( lower, limit ) ) ){
+   if ( jans::big_int::smaller( upper_dn, blk_size ) ){ lower_dn.copy( 0 ); }
+   else { jans::big_int::diff( lower_dn, upper_dn, blk_size ); }
 
-      jans::big_int::diff( work1, upper, lower );
-      const ubase_t loopsize = work1.get_blk( 0 );
-      for ( ubase_t cnt = 0; cnt < loopsize; cnt++ ){ sumlog[ cnt ] = 0.0; }
+   while ( ( lincount < linspace ) && ( ( jans::big_int::equal( lower_up, upper_up ) == false ) || ( jans::big_int::equal( lower_dn, upper_dn ) == false ) ) ){
 
-      for ( int ip = 0; ip < num_primes; ip++ ){
-         const ubase_t prime   =   primes[ ip ];
-         const double logvalue =   logval[ ip ];
-         ubase_t idx           = offset_p[ ip ];
-         while ( idx < loopsize ){
-            sumlog[ idx ] += logvalue;
-            idx += prime;
-         }
-         offset_p[ ip ] = idx - loopsize;
-      }
+      if ( jans::big_int::equal( lower_up, upper_up ) == false ){
 
-      for ( int ip = 1; ip < num_primes; ip++ ){ // Not for prime 2
-         const ubase_t prime   =   primes[ ip ];
-         const double logvalue =   logval[ ip ];
-         ubase_t idx           = offset_n[ ip ];
-         while ( idx < loopsize ){
-            sumlog[ idx ] += logvalue;
-            idx += prime;
-         }
-         offset_n[ ip ] = idx - loopsize;
-      }
+         jans::big_int::diff( work1, upper_up, lower_up );
+         const ubase_t loopsize = work1.get_blk( 0 );
 
-      int count1 = 0;
-      int count2 = 0;
-      work1.copy( lower );
-      for ( ubase_t cnt = 0; cnt < loopsize; cnt++ ){
-         jans::big_int::xx_min_num( work2, work1, target );
-         const double reference = jans::big_int::logarithm( work2 ) - grace;
-         if ( sumlog[ cnt ] > reference ){
-            count1++;
-            const bool smooth = __extract__( work2, helper );
-            if ( smooth ){
-               count2++;
-               xvalues[ lincount ].copy( work1 );
-               std::cout << "Smooth ( x * x - N ) no. " << lincount << " for value x = " << xvalues[ lincount ].write( 10 ) << std::endl;
-               for ( int ip = 0; ip < num_primes; ip++ ){
-                  powers[ lincount * num_primes + ip ] = helper[ ip ];
+         __fill_sumlog__( sumlog, shift1_up, shift2_up, loopsize );
+
+         int count1 = 0;
+         int count2 = 0;
+         work1.copy( lower_up );
+         for ( ubase_t cnt = 0; cnt < loopsize; cnt++ ){
+            jans::big_int::xx_min_num( work2, work1, target );
+            const double reference = jans::big_int::logarithm( work2 ) - grace;
+            if ( sumlog[ cnt ] > reference ){
+               count1++;
+               const bool smooth = __extract__( work2, helper );
+               if ( smooth ){
+                  count2++;
+                  xvalues[ lincount ].copy( work1 );
+                  std::cout << "Smooth ( x * x - N ) no. " << lincount << " for value x = " << xvalues[ lincount ].write( 10 ) << std::endl;
+                  powers[ lincount * powspace + 0 ] = 0; // Because positive Q(x)
+                  for ( int ip = 0; ip < num_primes; ip++ ){
+                     powers[ lincount * powspace + 1 + ip ] = helper[ ip ];
+                  }
+                  lincount++;
+                  if ( lincount == linspace ){ cnt = loopsize; }
                }
-               lincount++;
-               if ( lincount == linspace ){ cnt = loopsize; }
             }
+            jans::big_int::plus1( work1 );
          }
-         jans::big_int::plus1( work1 );
-      }
-      std::cout << "In the present block " << count1 << " / " << loopsize << " were selected based on sums of logarithms." << std::endl;
-      std::cout << "In the present block " << count2 << " / " << count1   << " of the candidates were smooth." << std::endl;
+         std::cout << "In the present block (up) " << count1 << " / " << loopsize << " were selected based on sums of logarithms." << std::endl;
+         std::cout << "In the present block (up) " << count2 << " / " << count1   << " of the candidates were smooth." << std::endl;
 
-      lower.copy( upper );
-      jans::big_int::sum( upper, lower, blk_size );
-      if ( jans::big_int::smaller( upper, limit ) == false ){ upper.copy( limit ); }
+         lower_up.copy( upper_up );
+         jans::big_int::sum( upper_up, lower_up, blk_size );
+         if ( jans::big_int::smaller( upper_up, limit_up ) == false ){ upper_up.copy( limit_up ); }
+
+      }
+
+      if ( ( lincount < linspace ) && ( jans::big_int::equal( lower_dn, upper_dn ) == false ) ){
+
+         jans::big_int::diff( work1, upper_dn, lower_dn );
+         const ubase_t loopsize = work1.get_blk( 0 );
+
+         __fill_sumlog__( sumlog, shift1_dn, shift2_dn, loopsize );
+
+         int count1 = 0;
+         int count2 = 0;
+         work1.copy( upper_dn );
+         for ( ubase_t cnt = 0; cnt < loopsize; cnt++ ){
+            jans::big_int::min_xx_plus_num( work2, work1, target );
+            const double reference = jans::big_int::logarithm( work2 ) - grace;
+            if ( sumlog[ cnt ] > reference ){
+               count1++;
+               const bool smooth = __extract__( work2, helper );
+               if ( smooth ){
+                  count2++;
+                  xvalues[ lincount ].copy( work1 );
+                  std::cout << "Smooth ( x * x - N ) no. " << lincount << " for value x = " << xvalues[ lincount ].write( 10 ) << std::endl;
+                  powers[ lincount * powspace + 0 ] = 1; // Because negative Q(x)
+                  for ( int ip = 0; ip < num_primes; ip++ ){
+                     powers[ lincount * powspace + 1 + ip ] = helper[ ip ];
+                  }
+                  lincount++;
+                  if ( lincount == linspace ){ cnt = loopsize; }
+               }
+            }
+            jans::big_int::minus1( work1 );
+         }
+         std::cout << "In the present block (dn) " << count1 << " / " << loopsize << " were selected based on sums of logarithms." << std::endl;
+         std::cout << "In the present block (dn) " << count2 << " / " << count1   << " of the candidates were smooth." << std::endl;
+
+         upper_dn.copy( lower_dn );
+         if ( jans::big_int::smaller( upper_dn, blk_size ) ){ lower_dn.copy( 0 ); }
+         else { jans::big_int::diff( lower_dn, upper_dn, blk_size ); }
+
+      }
 
    }
 
    delete [] sumlog;
-   delete [] offset_p;
-   delete [] offset_n;
+   delete [] shift1_up;
+   delete [] shift2_up;
+   delete [] shift1_dn;
+   delete [] shift2_dn;
    delete [] helper;
+
+}
+
+void jans::sieve::__fill_sumlog__( double * sumlog, ubase_t * shift1, ubase_t * shift2, const ubase_t loopsize ) const{
+
+   for ( ubase_t cnt = 0; cnt < loopsize; cnt++ ){ sumlog[ cnt ] = 0.0; }
+
+   for ( int ip = 0; ip < num_primes; ip++ ){
+      const ubase_t prime = primes[ ip ];
+      const double  log_p = logval[ ip ];
+            ubase_t index = shift1[ ip ];
+      while ( index < loopsize ){
+         sumlog[ index ] += log_p;
+         index += prime;
+      }
+      shift1[ ip ] = index - loopsize;
+   }
+
+   for ( int ip = 1; ip < num_primes; ip++ ){ // Not for prime 2
+      const ubase_t prime = primes[ ip ];
+      const double  log_p = logval[ ip ];
+            ubase_t index = shift2[ ip ];
+      while ( index < loopsize ){
+         sumlog[ index ] += log_p;
+         index += prime;
+      }
+      shift2[ ip ] = index - loopsize;
+   }
 
 }
 

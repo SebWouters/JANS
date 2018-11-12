@@ -32,7 +32,7 @@ namespace jans{
 
          virtual ~sieve();
 
-         void run( jans::big_int & p, jans::big_int & q, const int blk_size, const double grace );
+         void run( jans::big_int & p, jans::big_int & q, const ubase_t blk_size, const double grace );
 
       private:
 
@@ -54,7 +54,9 @@ namespace jans{
 
          int extra_sz;
 
-         int linspace; // num_primes + extra_sz
+         int powspace; // num_primes + 1 ( to account for sign Q(x) )
+
+         int linspace; // powspace + extra_sz
 
          int lincount;
 
@@ -78,11 +80,13 @@ namespace jans{
 
          bool __extract__( big_int & x, ubase_t * powers ) const;
 
-         void __sieving_grace__( const int blk_size, const double grace );
+         void __sieving_grace__( const ubase_t blk_size, const double grace );
 
-         void __solve_gaussian__( unsigned char * helper );
+         void __solve_gaussian__( unsigned char * helper ) const;
 
          void __factor__( unsigned char * helper, jans::big_int & p, jans::big_int & q );
+
+         void __fill_sumlog__( double * sumlog, ubase_t * shift1, ubase_t * shift2, const ubase_t loopsize ) const;
 
    };
 
