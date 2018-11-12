@@ -310,8 +310,8 @@ void jans::sieve::__sieving_grace__( const int blk_size, const double grace ){
 
       int count1 = 0;
       int count2 = 0;
+      work1.copy( lower );
       for ( ubase_t cnt = 0; cnt < loopsize; cnt++ ){
-         jans::big_int::sum( work1, lower, cnt );
          jans::big_int::xx_min_num( work2, work1, target );
          const double reference = jans::big_int::logarithm( work2 ) - grace;
          if ( sumlog[ cnt ] > reference ){
@@ -328,6 +328,7 @@ void jans::sieve::__sieving_grace__( const int blk_size, const double grace ){
                if ( lincount == linspace ){ cnt = loopsize; }
             }
          }
+         jans::big_int::plus1( work1 );
       }
       std::cout << "In the present block " << count1 << " / " << loopsize << " were selected based on sums of logarithms." << std::endl;
       std::cout << "In the present block " << count2 << " / " << count1   << " of the candidates were smooth." << std::endl;

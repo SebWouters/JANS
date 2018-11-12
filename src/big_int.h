@@ -63,6 +63,10 @@ namespace jans{
 
          // Generic math operations
 
+         static void plus1( big_int & res ); // res += 1
+
+         static void minus1( big_int & res ); // res -= 1
+
          static void sum( big_int & res, big_int & a, big_int & b );
 
          static void sum( big_int & res, big_int & a, const ubase_t b );

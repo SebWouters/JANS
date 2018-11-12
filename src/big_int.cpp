@@ -94,6 +94,12 @@ ubase_t jans::big_int::get_blk( const int i ){
 
 }
 
+void jans::big_int::plus1( big_int & res ){
+
+   res.lead = __sum1__( res.data, res.lead, 1 );
+
+}
+
 void jans::big_int::sum( big_int & res, big_int & a, big_int & b ){
 
    res.lead = __sum3set__( res.data, a.data, a.lead, b.data, b.lead );
@@ -105,6 +111,12 @@ void jans::big_int::sum( big_int & res, big_int & a, const ubase_t b ){
    res.lead = a.lead;
    __copy__( res.data, a.data );
    res.lead = __sum1__( res.data, res.lead, b );
+
+}
+
+void jans::big_int::minus1( big_int & res ){
+
+   res.lead = __diff1__( res.data, 1 );
 
 }
 
