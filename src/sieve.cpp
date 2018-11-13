@@ -30,7 +30,7 @@ jans::sieve::sieve( const ubase_t bound, jans::big_int & num, const int extra ){
    this->bound = bound;
    target.copy( num );
 
-   __startup__();
+   __startup__(); // Creates primes, roots, and logvals
 
    extra_sz = extra;
    powspace = num_primes + 1; // Positive and negative Q(x)
@@ -50,75 +50,6 @@ jans::sieve::~sieve(){
 
    delete [] xvalues;
    delete [] powers;
-
-}
-
-void jans::sieve::__startup__(){
-
-   const int num_blk = bound / ( 2 * BLOCK_BIT ) + 1;
-   assert( num_blk < ( 1UL << BLOCK_BIT ) / ( 2 * BLOCK_BIT ) ); // Check that ( 2 * BLOCK_BIT * num_blk ) does not overflow ubase_t
-   assert( 2 * num_blk * BLOCK_BIT - 1 >= bound );
-
-   ubase_t * helper = new ubase_t[ num_blk ];
-   for ( int i = 0; i < num_blk; i++ ){
-      helper[ i ] = __11111111__;
-   }
-
-   num_primes = 1; // 2 is a prime, even numbers not looped
-
-   for ( ubase_t ip = 0; ip < num_blk; ip++ ){
-      for ( ubase_t jp = 0; jp < BLOCK_BIT; jp++ ){
-
-         const ubase_t number = 2 * ( BLOCK_BIT * ip + jp ) + 1;
-         bool process = ( ( helper[ ip ] >> jp ) & 1U );
-         process = ( ( process ) && ( number > 2 ) && ( number <= bound ) );
-
-         if ( process ){
-            const bool ok = ( __legendre_symbol__( target, number ) == 1 );
-            if ( ok ){ num_primes++; }
-            const ubase_t start = ( ( ok ) ? 3 : 1 );
-            const ubase_t stop  = bound / number;
-
-            for ( ubase_t factor = start; factor <= stop; factor += 2 ){ // only consider odd factors
-               const ubase_t it = factor * ip + ( ( 2 * jp + 1 ) * factor - 1 ) / ( 2 * BLOCK_BIT );
-               const ubase_t jt =             ( ( ( 2 * jp + 1 ) * factor - 1 ) % ( 2 * BLOCK_BIT ) ) / 2;
-               helper[ it ] &= ~( 1U << jt );
-            }
-         }
-      }
-   }
-
-   primes = new ubase_t[ num_primes ];
-   roots  = new ubase_t[ num_primes ];
-   logval = new  double[ num_primes ];
-
-   primes[ 0 ] = 2;
-    roots[ 0 ] = 1;
-   logval[ 0 ] = log( 2.0 );
-
-   int check = 1;
-
-   for ( ubase_t ip = 0; ip < num_blk; ip++ ){
-      for ( ubase_t jp = 0; jp < BLOCK_BIT; jp++ ){
-
-         const ubase_t number = 2 * ( BLOCK_BIT * ip + jp ) + 1;
-         bool process = ( ( helper[ ip ] >> jp ) & 1U );
-         process = ( ( process ) && ( number > 2 ) && ( number <= bound ) );
-
-         if ( process ){
-
-            const ubase_t a = __root_quadratic_residue__( target, number );
-            primes[ check ] = number;
-             roots[ check ] = a;
-            logval[ check ] = log( ( double ) number );
-            check++;
-
-         }
-      }
-   }
-   assert( check == num_primes );
-
-   delete [] helper;
 
 }
 
@@ -203,52 +134,117 @@ void jans::sieve::__factor__( unsigned char * helper, jans::big_int & p, jans::b
 
 void jans::sieve::__solve_gaussian__( unsigned char * helper ) const{
 
-   const int d_row = linspace;
-   const int d_col = powspace;
+   unsigned char * lin_contributes = new unsigned char[ linspace ];
+   unsigned char * pow_contributes = new unsigned char[ powspace ];
+   for ( ubase_t lin = 0; lin < linspace; lin++ ){ lin_contributes[ lin ] = 1; }
+   for ( ubase_t pow = 0; pow < powspace; pow++ ){ pow_contributes[ pow ] = 1; }
 
-   unsigned char * matrix = new unsigned char[ d_row * ( d_col + d_row ) ];
-
-   for ( int row = 0; row < d_row; row++ ){
-      for ( int col = 0; col < ( d_col + d_row ); col++ ){
-         matrix[ row + d_row * col ] = 0;
+   ubase_t vecspace = linspace;
+   for ( ubase_t pow = 0; pow < powspace; pow++ ){
+      ubase_t num_odds = 0;
+      ubase_t last = linspace;
+      for ( ubase_t lin = 0; lin < linspace; lin++ ){
+         if ( ( powers[ pow + powspace * lin ] % 2 ) == 1 ){
+            num_odds++;
+            last = lin;
+            if ( num_odds == 2 ){ lin = linspace; }
+         }
       }
-      matrix[ row + d_row * ( d_col + row ) ] = 1;
+      if ( num_odds == 1 ){
+         vecspace--;
+         lin_contributes[ last ] = 0;
+      }
    }
 
-   for ( int row = 0; row < d_row; row++ ){
-      for ( int col = 0; col < d_col; col++ ){
-         matrix[ row + d_row * col ] = powers[ col + d_col * row ] % 2;
+   std::cout << "Removed " << linspace - vecspace << " of the " << linspace << " vectors with a unique odd prime power." << std::endl;
+
+   ubase_t redspace = powspace;
+   for ( ubase_t pow = 0; pow < powspace; pow++ ){
+      ubase_t num_odds = 0;
+      ubase_t lin = 0;
+      for ( ubase_t vec = 0; vec < vecspace; vec++ ){
+         while ( lin_contributes[ lin ] == 0 ){ lin++; }
+         if ( ( powers[ pow + powspace * lin ] % 2 ) == 1 ){
+            num_odds++;
+            vec = vecspace;
+         }
+         lin++;
+      }
+      if ( num_odds == 0 ){
+         redspace--;
+         pow_contributes[ pow ] = 0;
       }
    }
 
-   int start_row = 0;
-   for ( int p = 0; p < d_col; p++ ){
-      bool found = false;
-      int iter = start_row;
-      while ( ( found == false ) && ( iter < d_row ) ){
-         if ( matrix[ iter + d_row * p ] == 1 ){ found = true; }
+   std::cout << "Removed " << powspace - redspace << " of the " << powspace << " primes with only even powers." << std::endl;
+
+   const ubase_t d_vec = vecspace;
+   const ubase_t d_lin = linspace;
+   const ubase_t d_red = redspace;
+   const ubase_t d_pow = powspace;
+   const ubase_t d_row = redspace + linspace;
+   const ubase_t d_sol = linspace - powspace;
+
+   unsigned char * matrix = new unsigned char[ d_row * d_vec ];
+
+   /*
+    * matrix = [  d_red x d_vec  ]
+    *          [  -------------  ]
+    *          [  d_lin x d_vec  ]
+    */
+
+   for ( ubase_t vec = 0; vec < d_vec; vec++ ){
+      for ( ubase_t row = 0; row < d_row; row++ ){
+         matrix[ row + d_row * vec ] = 0;
+      }
+   }
+
+   {
+      ubase_t lin = 0;
+      for ( ubase_t vec = 0; vec < d_vec; vec++ ){
+         while ( lin_contributes[ lin ] == 0 ){ lin++; }
+         ubase_t pow = 0;
+         for ( ubase_t red = 0; red < d_red; red++ ){
+            while ( pow_contributes[ pow ] == 0 ){ pow++; }
+            matrix[ red + d_row * vec ] = ( powers[ pow + d_pow * lin ] % 2 );
+            pow++;
+         }
+         matrix[ d_red + lin + d_row * vec ] = 1;
+         lin++;
+      }
+   }
+
+   delete [] lin_contributes;
+   delete [] pow_contributes;
+
+   ubase_t start_vec = 0;
+   for ( ubase_t red = 0; red < d_red; red++ ){
+      bool found   = false;
+      ubase_t iter = start_vec;
+      while ( ( found == false ) && ( iter < d_vec ) ){
+         if ( matrix[ red + d_row * iter ] == 1 ){ found = true; }
          else { iter++; }
       }
       if ( found == true ){
-         if ( iter != start_row ){
-            for ( int col = 0; col < ( d_col + d_row ); col++ ){
-               matrix[ start_row + d_row * col ] = ( matrix[ iter + d_row * col ] + matrix[ start_row + d_row * col ] ) % 2;
+         if ( iter != start_vec ){
+            for ( ubase_t row = red; row < d_row; row++ ){
+               matrix[ row + d_row * start_vec ] = ( matrix[ row + d_row * iter ] ) ^ ( matrix[ row + d_row * start_vec ] );
             }
          }
-         for ( int row = start_row + 1; row < d_row; row++ ){
-            if ( matrix[ row + d_row * p ] == 1 ){
-               for ( int col = 0; col < ( d_col + d_row ); col++ ){
-                  matrix[ row + d_row * col ] = ( matrix[ row + d_row * col ] + matrix[ start_row + d_row * col ] ) % 2;
+         for ( ubase_t vec = start_vec + 1; vec < d_vec; vec++ ){
+            if ( matrix[ red + d_row * vec ] == 1 ){
+               for ( ubase_t row = red; row < d_row; row++ ){
+                  matrix[ row + d_row * vec ] = ( matrix[ row + d_row * vec ] ) ^ ( matrix[ row + d_row * start_vec ] );
                }
             }
          }
-         start_row++;
+         start_vec++;
       }
    }
 
-   for ( int sol = 0; sol < ( d_row - d_col ); sol++ ){
-      for ( int col = 0; col < d_row; col++ ){
-         helper[ col + d_row * sol ] = matrix[ start_row + sol + d_row * ( d_col + col ) ];
+   for ( ubase_t sol = 0; sol < d_sol; sol++ ){
+      for ( ubase_t row = 0; row < d_lin; row++ ){
+         helper[ row + d_lin * sol ] = matrix[ d_red + row + d_row * ( d_vec - d_sol + sol ) ];
       }
    }
 
@@ -406,138 +402,6 @@ void jans::sieve::__fill_sumlog__( double * sumlog, ubase_t * shift1, ubase_t * 
       }
       shift2[ ip ] = index - loopsize;
    }
-
-}
-
-int jans::sieve::__legendre_symbol__( jans::big_int & num, const ubase_t p ){
-
-   jans::big_int work;
-   const ubase_t rem = jans::big_int::div( work, num, p );
-   return __legendre_symbol__( rem, p );
-
-}
-
-int jans::sieve::__legendre_symbol__( const ubase_t num, const ubase_t p ){
-
-   // Algorithm 2.3.5, Crandall & Pomerance
-
-   assert( ( p % 2 ) != 0 );
-
-   int t = 1;
-   ubase_t a = num % p;
-   ubase_t m = p;
-   ubase_t s = 0;
-
-   while ( a != 0 ){
-      while ( ( a % 2 ) == 0 ){
-         a = a / 2;
-         s = m % 8;
-         if ( ( s == 3 ) || ( s == 5 ) ){ t = -t; }
-      }
-      s = a;
-      a = m;
-      m = s;
-      if ( ( ( a % 4 ) == 3 ) && ( m % 4 == 3 ) ){ t = -t; }
-      a = a % m;
-   }
-   if ( m == 1 ){ return t; }
-   return 0;
-
-}
-
-ubase_t jans::sieve::__power__( const ubase_t num, const ubase_t pow, const ubase_t mod ){
-
-   ucarry_t res = 1;
-   ucarry_t temp = num % mod; // temp = num^{2^j} % mod
-   for ( int j = 0; j < BLOCK_BIT; j++ ){
-      if ( ( pow >> j ) & 1U ){ res = ( res * temp ) % mod; }
-      temp = ( temp * temp ) % mod;
-   }
-   return ( ( ubase_t )( res ) );
-
-}
-
-ubase_t jans::sieve::__root_quadratic_residue__( jans::big_int & num, const ubase_t p ){
-
-   jans::big_int work;
-   const ubase_t rem = jans::big_int::div( work, num, p ); // rem = num % p
-   return __root_quadratic_residue__( rem, p );
-
-}
-
-ubase_t jans::sieve::__root_quadratic_residue__( const ubase_t num, const ubase_t p ){
-
-   // Tonelli–Shanks
-
-   const ubase_t rem = num % p;
-
-   if ( p % 4 == 3 ){
-      return __power__( rem, ( p + 1 ) / 4, p );
-   }
-
-   ubase_t S = 0;
-   ubase_t Q = p - 1;
-   while ( Q % 2 == 0 ){
-      S++;
-      Q = Q / 2;
-   } // p - 1 = 2^S * Q(odd)
-
-   ubase_t z = 0;
-   int leg_sym = 0;
-   while ( leg_sym != -1 ){
-      z = ( rand() % ( p - 2 ) ) + 2; // random number in [ 2 .. p - 1 ]
-      leg_sym = __legendre_symbol__( z, p );
-   }
-
-   ubase_t M = S;
-   ubase_t c = __power__(   z, Q, p );             // c^{2^{M-1}} = z^{(p-1)/2} = -1 mod p
-   ubase_t t = __power__( rem, Q, p );             // t^{2^{M-1}} = n^{(p-1)/2} = +1 mod p
-   ubase_t R = __power__( rem, ( Q + 1 ) / 2, p ); // R^2 = n.t mod p
-
-   while ( t != 1 ){
-
-      /*
-          Find min. 0 < i < M so that t^{2^i} mod p = 1
-          Guaranteed to exist: - while loop condition
-                               - t^{2^{M-1}} = +1 mod p
-      */
-      ubase_t i = 0;
-      ucarry_t b = t;
-      while ( ( b != 1 ) && ( i < M ) ){
-         i++;
-         b = ( b * b ) % p; // t^{2^i} mod p
-      }
-
-      // Calculate c^{2^{M-i-1}} mod p
-      ubase_t j = 0;
-      b = c;
-      while ( j < M - i - 1 ){
-         j++;
-         b = ( b * b ) % p; // c^{2^j} mod p
-      }
-
-      M = i;                             // M decreases each iteration!
-      c = ( b * b ) % p;                 // c'^{2^{M'-1}} =   (b^2)^{2^{i-1}} = c^{2^{M-1}}             = -1   mod p
-      t = ( ( ( t * b ) % p ) * b ) % p; // t'^{2^{M'-1}} = (t.b^2)^{2^{i-1}} = t^{2^{i-1}}.c^{2^{M-1}} = +1   mod p
-      R = ( R * b ) % p;                 // R'^2          = (R.b)^2           = n.t.b^2                 = n.t' mod p
-
-   }
-
-   return R;
-
-}
-
-bool jans::sieve::__extract__( big_int & x, ubase_t * helper ) const{
-
-   for ( int ip = 0; ip < num_primes; ip++ ){
-      helper[ ip ] = jans::big_int::extract_pow_p( x, primes[ ip ] );
-      if ( jans::big_int::equal( x, 1 ) ){
-         for ( int it = ip + 1; it < num_primes; it++ ){ helper[ it ] = 0; }
-         return true;
-      }
-   }
-
-   return false;
 
 }
 
