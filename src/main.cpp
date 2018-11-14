@@ -176,8 +176,8 @@ int main()
 {
 
    const int     factor   = 1024 / BASE_UNIT; // big_int contains factor * BASE_UNIT bits
-   const int     bvalue   = 1350;
-   const ubase_t blk_size = 100000; //10000000; // 76 MB doubles
+   const int     bvalue   = 3700; //1350;
+   const ubase_t M        = 100000; //10000000; // 76 MB doubles
    const double  grace    = 8.0;
    const int     extra_sz = 11; // min. 1, liefst 11
 
@@ -189,7 +189,9 @@ int main()
    //test3( true );
    //test4( true );
 
-   std::string n_test = "61421677127643670816789";
+   std::string n_test = "11111111111111111111111111111";
+                        //"819645416289842152626181";
+                        //"61421677127643670816789";
    jans::big_int n; n.read( n_test, 10 );
    jans::big_int p;
    jans::big_int q;
@@ -198,8 +200,8 @@ int main()
    const int opt_bval = ceil( exp( 0.5 * sqrt( ln_n * log( ln_n ) ) ) );
    std::cout << "Optimal B = " << opt_bval << std::endl;
 
-   jans::sieve mysieve( bvalue, n, extra_sz );
-   mysieve.run( p, q, blk_size, grace );
+   jans::sieve mysieve( n, bvalue, M, extra_sz );
+   mysieve.run( p, q, grace );
 
    std::cout << "Given n = p x q with" << std::endl;
    std::cout << "      n = " << n.write( 10 ) << std::endl;

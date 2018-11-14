@@ -28,17 +28,19 @@ namespace jans{
 
       public:
 
-         sieve( const ubase_t bound, jans::big_int & num, const int extra );
+         sieve( jans::big_int & num, const ubase_t B, const ubase_t M, const int extra );
 
          virtual ~sieve();
 
-         void run( jans::big_int & p, jans::big_int & q, const ubase_t blk_size, const double grace );
+         void run( jans::big_int & p, jans::big_int & q, const double grace );
 
       private:
 
-         ubase_t bound;
+         ubase_t M;
 
          jans::big_int target; // N
+
+         jans::big_int mpqs_p; // number near ( 2N )^0.25 / sqrt( M )
 
          // Factor base information
 
@@ -66,13 +68,19 @@ namespace jans{
 
          // Helper funcionality
 
-         void __startup__();
+         void __startup1__();
+
+         void __startup2__( const ubase_t bound );
+
+         static int __legendre_symbol__( jans::big_int & num, jans::big_int & p );
 
          static int __legendre_symbol__( jans::big_int & num, const ubase_t p );
 
          static int __legendre_symbol__( const ubase_t num, const ubase_t p );
 
          static ubase_t __power__( const ubase_t num, const ubase_t pow, const ubase_t mod );
+
+         static void __root_quadratic_residue__( big_int & R, big_int & num, big_int & p );
 
          static ubase_t __root_quadratic_residue__( jans::big_int & num, const ubase_t p );
 
@@ -87,6 +95,10 @@ namespace jans{
          void __factor__( unsigned char * helper, jans::big_int & p, jans::big_int & q );
 
          void __fill_sumlog__( double * sumlog, ubase_t * shift1, ubase_t * shift2, const ubase_t loopsize ) const;
+
+         void __select_q_list__( ubase_t * q_list, ubase_t * p_list, const ubase_t K, const ubase_t M );
+
+         void __next_mpqs_p__( jans::big_int & a, jans::big_int & b );
 
    };
 

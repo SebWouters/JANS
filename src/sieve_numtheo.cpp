@@ -18,6 +18,8 @@
 */
 
 #include <assert.h>
+#include <stdio.h>
+#include <iostream>
 
 #include "sieve.h"
 
@@ -53,6 +55,38 @@ int jans::sieve::__legendre_symbol__( const ubase_t num, const ubase_t p ){
       a = a % m;
    }
    if ( m == 1 ){ return t; }
+   return 0;
+
+}
+
+int jans::sieve::__legendre_symbol__( jans::big_int & num, jans::big_int & p ){
+
+   // Algorithm 2.3.5, Crandall & Pomerance
+
+   assert( jans::big_int::even( p ) == false );
+   jans::big_int w;
+   jans::big_int q;
+   jans::big_int a; jans::big_int::div( w, a, num, p ); // a = num % p
+   jans::big_int m; m.copy( p ); // m = p
+
+   int t = 1;
+   ubase_t rem;
+
+   while ( jans::big_int::equal( a, 0 ) == false ){
+      while ( jans::big_int::even( a ) ){
+         rem = jans::big_int::div( w, a, 2 );
+         a.copy( w );
+         assert( rem == 0 );
+         rem = jans::big_int::div( w, m, 8 );
+         if ( ( rem == 3 ) || ( rem == 5 ) ){ t = -t; }
+      }
+      if ( ( jans::big_int::div( w, a, 4 ) == 3 ) && ( jans::big_int::div( q, m, 4 ) == 3 ) ){ t = -t; }
+      w.copy( m ); // w = m(old) = a(new)
+      m.copy( a );
+      a.copy( w );
+      jans::big_int::div( q, a, w, m ); // a = a % m
+   }
+   if ( jans::big_int::equal( m, 1 ) ){ return t; }
    return 0;
 
 }
@@ -142,10 +176,10 @@ ubase_t jans::sieve::__root_quadratic_residue__( const ubase_t num, const ubase_
          b = ( b * b ) % p; // c^{2^j} mod p
       }
 
-      M = i;                             // M decreases each iteration!
-      c = ( b * b ) % p;                 // c'^{2^{M'-1}} =   (b^2)^{2^{i-1}} = c^{2^{M-1}}             = -1   mod p
-      t = ( ( ( t * b ) % p ) * b ) % p; // t'^{2^{M'-1}} = (t.b^2)^{2^{i-1}} = t^{2^{i-1}}.c^{2^{M-1}} = +1   mod p
-      R = ( R * b ) % p;                 // R'^2          = (R.b)^2           = n.t.b^2                 = n.t' mod p
+      M = i;             // M decreases each iteration!
+      c = ( b * b ) % p; // c'^{2^{M'-1}} =   (b^2)^{2^{i-1}} = c^{2^{M-1}}             = -1   mod p
+      t = ( t * c ) % p; // t'^{2^{M'-1}} = (t.b^2)^{2^{i-1}} = t^{2^{i-1}}.c^{2^{M-1}} = +1   mod p
+      R = ( R * b ) % p; // R'^2          = (R.b)^2           = n.t.b^2                 = n.t' mod p
 
    }
 

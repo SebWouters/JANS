@@ -95,15 +95,21 @@ bool jans::big_int::smaller( big_int & n1, const ubase_t n2 ){
 
 }
 
+bool jans::big_int::even( big_int & n1 ){
+
+   return ( ( n1.data[ 0 ] % 2 ) == 0 );
+
+}
+
 ubase_t jans::big_int::get_blk( const int i ){
 
    return data[ i ];
 
 }
 
-void jans::big_int::plus1( big_int & res ){
+void jans::big_int::plus( big_int & res, const ubase_t val ){
 
-   res.lead = __sum1__( res.data, res.lead, 1 );
+   res.lead = __sum1__( res.data, res.lead, val );
 
 }
 
@@ -121,9 +127,9 @@ void jans::big_int::sum( big_int & res, big_int & a, const ubase_t b ){
 
 }
 
-void jans::big_int::minus1( big_int & res ){
+void jans::big_int::minus( big_int & res, const ubase_t val ){
 
-   res.lead = __diff1__( res.data, 1 );
+   res.lead = __diff1__( res.data, val );
 
 }
 
@@ -204,6 +210,39 @@ ubase_t jans::big_int::gcd( big_int & a, const ubase_t b ){
    }
 
    return new_a;
+
+}
+
+void jans::big_int::prodmod( big_int & q, big_int & r, big_int & a, big_int & b, big_int & m ){
+
+   r.lead = __mult3set__( r.data, a.data, a.lead, b.data, b.lead );
+   __divide__( q.data, q.lead, r.data, r.lead, m.data, m.lead );
+
+}
+
+void jans::big_int::power( big_int & res, big_int & base, big_int & expo, big_int & mod ){
+
+   big_int work1;
+   big_int work2;
+   big_int work3;
+   big_int junk;
+
+   div( junk, work1, expo, mod ); // work1 = expo % mod
+   div( junk, work2, base, mod ); // work2 = base % mod
+
+   res.copy( 1 );
+
+   for ( int ie = 0; ie < work1.lead; ie++ ){
+      for ( int je = 0; je < BLOCK_BIT; je++ ){
+         const bool to_multiply = ( ( work1.get_blk( ie ) >> je ) & 1U );
+         if ( to_multiply ){
+            prod( work3, work2, res );
+            div( junk, res, work3, mod ); // res = ( work2 * res ) % mod
+         }
+         prod( work3, work2, work2 );
+         div( junk, work2, work3, mod ); // work2 = ( base ) ^ ( 2 ^ ( BLOCK_BIT * ie + je + 1 ) )
+      }
+   }
 
 }
 

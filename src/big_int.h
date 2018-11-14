@@ -59,15 +59,17 @@ namespace jans{
 
          static bool smaller( big_int & n1, const ubase_t n2 );
 
+         static bool even( big_int & n1 );
+
          static void sanity_check();
 
          static void set_num_block( const int factor );
 
          // Generic math operations
 
-         static void plus1( big_int & res ); // res += 1
+         static void plus( big_int & res, const ubase_t val ); // res += val
 
-         static void minus1( big_int & res ); // res -= 1
+         static void minus( big_int & res, const ubase_t val ); // res -= val
 
          static void sum( big_int & res, big_int & a, big_int & b );
 
@@ -92,6 +94,10 @@ namespace jans{
          static void gcd( big_int & res, big_int & a, big_int & b );
 
          static ubase_t gcd( big_int & a, const ubase_t b ); // Returns gcd( a, b )
+
+         static void power( big_int & res, big_int & base, big_int & expo, big_int & mod );
+
+         static void prodmod( big_int & q, big_int & r, big_int & a, big_int & b, big_int & m ); // { q, r } = { ( a * b ) / m, ( a * b ) % m }
 
          static void ceil_sqrt( big_int & res, big_int & n );
 

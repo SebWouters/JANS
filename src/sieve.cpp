@@ -25,12 +25,15 @@
 
 #include "sieve.h"
 
-jans::sieve::sieve( const ubase_t bound, jans::big_int & num, const int extra ){
+jans::sieve::sieve( jans::big_int & num, const ubase_t B, const ubase_t M, const int extra ){
 
-   this->bound = bound;
+   //check_bounds_M
+   assert( M >= B );
+   this->M = M; // Sieve for x in [-M, M]
    target.copy( num );
 
-   __startup__(); // Creates primes, roots, and logvals
+   __startup1__(); // Sets initial mpqs_p
+   __startup2__( B ); // Sets num_primes & creates primes, roots, and logvals
 
    extra_sz = extra;
    powspace = num_primes + 1; // Positive and negative Q(x)
@@ -53,9 +56,20 @@ jans::sieve::~sieve(){
 
 }
 
-void jans::sieve::run( jans::big_int & p, jans::big_int & q, const ubase_t blk_size, const double grace ){
+void jans::sieve::run( jans::big_int & p, jans::big_int & q, const double grace ){
 
-   __sieving_grace__( blk_size, grace );
+   jans::big_int a;
+   jans::big_int b;
+
+   __next_mpqs_p__( a, b ); // 0 <= b < a /2 
+
+   // compute inverse of a modulo p_i for factor base
+   // store a x + b in list instead of x, store additionally p in list
+   // check bounds for ( ax + b ) --> with a * x = sqrt( 2 N )/ M * M --> upper limit for a...
+
+   //return;
+
+   __sieving_grace__( M, grace );
    assert( lincount == linspace );
 
    unsigned char * helper = new unsigned char[ extra_sz * linspace ];
@@ -64,6 +78,90 @@ void jans::sieve::run( jans::big_int & p, jans::big_int & q, const ubase_t blk_s
    __factor__( helper, p, q );
 
    delete [] helper;
+
+}
+
+void jans::sieve::__next_mpqs_p__( jans::big_int & a, jans::big_int & b ){
+
+   bool okprime = false;
+
+   ubase_t num_attempts = 0;
+
+   while ( okprime == false ){
+
+      num_attempts += 1;
+      jans::big_int::minus( mpqs_p, 4 ); // To keep p % 4 == 3  and  p * p <= sqrt(2N)/M
+      okprime = true;
+
+      // Check 1: factor base does not divide mpqs_p --> if not probably prime then
+      for ( int ip = 0; ip < num_primes; ip++ ){
+         const ubase_t rem = jans::big_int::div( a, mpqs_p, primes[ ip ] );
+         if ( rem == 0 ){
+            okprime = false;
+            ip = num_primes;
+         }
+      }
+
+      // Check 2: (n/p) == 1
+      if ( okprime == true ){
+         const int symbol = __legendre_symbol__( target, mpqs_p );
+         if ( symbol != 1 ){
+            okprime = false;
+         }
+      }
+
+      // Check 3: calculate b under assumption mpqs_p prime and check b * b == n ( mod mpqs_p * mpqs_p )
+      if ( okprime == true ){
+
+         std::cout << "Candidate p = " << mpqs_p.write( 10 ) << std::endl;
+
+         jans::big_int work1;
+         jans::big_int work2;
+         jans::big_int work3;
+         jans::big_int h0;
+         jans::big_int h1;
+         jans::big_int h2;
+
+         // h0 = n ^ ( ( p - 3 ) / 4 ) mod p
+         jans::big_int::diff( work1, mpqs_p, 3 ); // work1 = p - 3
+         ubase_t rem = jans::big_int::div( work2, work1, 4 ); // work2 = ( p - 3 ) / 4
+         assert( rem == 0 );
+         jans::big_int::power( h0, target, work2, mpqs_p );
+
+         // h1 = n ^ ( ( p + 1 ) / 4 ) mod p = n * h0 mod p
+         jans::big_int::prodmod( work2, h1, target, h0, mpqs_p );
+
+         // h2 = (2 * h1)^{-1}( ( n - h1^2 ) / p ) mod p
+         jans::big_int::sum( work2, mpqs_p, 1 );                    // work2 = p + 1
+         rem = jans::big_int::div( work3, work2, 2 );               // work3 = ( p + 1 ) / 2 : work3 = 2^{-1} mod p
+         assert( rem == 0 );
+         jans::big_int::prodmod( work2, work1, work3, h0, mpqs_p ); // work1 = (2 * h1)^{-1} mod p
+         jans::big_int::prod( work2, h1, h1 );
+         jans::big_int::diff( work3, target, work2 );
+         jans::big_int::div( work2, h2, work3, mpqs_p );            // work2 = ( n - h1^2 ) / p
+         assert( jans::big_int::equal( h2, 0 ) );
+         jans::big_int::prodmod( work3, h2, work1, work2, mpqs_p ); // h2 = [ (2 * h1)^{-1} * ( n - h1^2 ) / p ] mod p
+
+         // a = p * p
+         jans::big_int::prod( a, mpqs_p, mpqs_p );
+
+         // b = h1 + p*h2 <= ( p - 1 ) + p * ( p - 1 ) = p * p - 1 < a
+         jans::big_int::prod( work3, h2, mpqs_p );
+         jans::big_int::sum( b, h1, work3 );
+         jans::diff::( work2, a, b );
+         if ( jans::big_int::smaller( work2, b ) ){
+            b.copy( work2 );
+         }
+
+         // check b * b % a == target % a
+         jans::big_int::prod( work1, b, b );
+         jans::big_int::div( work3, work2, work1,  a ); // work2 = ( b * b ) % a
+         jans::big_int::div( work3, work1, target, a ); // work1 = target % a
+         okprime = jans::big_int::equal( work1, work2 );
+         assert( okprime );
+
+      }
+   }
 
 }
 
@@ -139,7 +237,7 @@ void jans::sieve::__sieving_grace__( const ubase_t blk_size, const double grace 
    jans::big_int lower_up; jans::big_int::ceil_sqrt( lower_up, target ); // ceil( sqrt( N ) )
    jans::big_int upper_up;
    jans::big_int limit_up; jans::big_int::ceil_sqrt( limit_up, work1 ); // ceil( sqrt( 2N ) )
-   jans::big_int upper_dn; upper_dn.copy( lower_up ); jans::big_int::minus1( upper_dn ); // ceil( sqrt( N ) ) - 1
+   jans::big_int upper_dn; upper_dn.copy( lower_up ); jans::big_int::minus( upper_dn, 1 ); // ceil( sqrt( N ) ) - 1
    jans::big_int lower_dn;
 
    double  * sumlog    = new  double[ blk_size   ];
@@ -196,7 +294,7 @@ void jans::sieve::__sieving_grace__( const ubase_t blk_size, const double grace 
                   if ( lincount == linspace ){ cnt = loopsize; }
                }
             }
-            jans::big_int::plus1( work1 );
+            jans::big_int::plus( work1, 1 );
          }
          std::cout << "In the present block (up) " << count1 << " / " << loopsize << " were selected based on sums of logarithms." << std::endl;
          std::cout << "In the present block (up) " << count2 << " / " << count1   << " of the candidates were smooth." << std::endl;
@@ -235,7 +333,7 @@ void jans::sieve::__sieving_grace__( const ubase_t blk_size, const double grace 
                   if ( lincount == linspace ){ cnt = loopsize; }
                }
             }
-            jans::big_int::minus1( work1 );
+            jans::big_int::minus( work1, 1 );
          }
          std::cout << "In the present block (dn) " << count1 << " / " << loopsize << " were selected based on sums of logarithms." << std::endl;
          std::cout << "In the present block (dn) " << count2 << " / " << count1   << " of the candidates were smooth." << std::endl;

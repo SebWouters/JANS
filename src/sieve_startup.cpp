@@ -22,7 +22,22 @@
 
 #include "sieve.h"
 
-void jans::sieve::__startup__(){
+void jans::sieve::__startup1__(){
+
+   jans::big_int work;
+   ubase_t rem;
+
+   jans::big_int::prod( work, target, 2 );      // work   = 2 * N
+   jans::big_int::ceil_sqrt( mpqs_p, work );    // mpqs_p = ceil( sqrt( 2N ) )
+   rem = jans::big_int::div( work, mpqs_p, M ); // work   = floor( ceil( sqrt( 2N ) ) / M )
+   jans::big_int::ceil_sqrt( mpqs_p, work );    // mpqs_p = ceil( sqrt( floor( ceil( sqrt( 2N ) ) / M ) ) )
+
+   rem = jans::big_int::div( work, mpqs_p, 4 );
+   jans::big_int::minus( mpqs_p, 1 + rem ); // mpqs_p % 4 = 3
+
+}
+
+void jans::sieve::__startup2__( const ubase_t bound ){
 
    /*
     *   Map: number = 2 * cnt + 1 <= bound = 2 * floor( bound / 2 )     = 2 * floor( ( bound - 1 ) / 2 ) + 1 (bound even)
