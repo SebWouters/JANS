@@ -7,5 +7,6 @@ g++ -O3 -march=native -flto\
     src/big_int_private.cpp\
     src/sieve.cpp\
     src/sieve_startup.cpp\
-    src/sieve_numtheo.cpp -o jans
+    src/sieve_numtheo.cpp\
+    src/sieve_gaussian.cpp -o jans
 

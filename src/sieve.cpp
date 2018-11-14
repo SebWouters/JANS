@@ -60,7 +60,7 @@ void jans::sieve::run( jans::big_int & p, jans::big_int & q, const ubase_t blk_s
 
    unsigned char * helper = new unsigned char[ extra_sz * linspace ];
 
-   __solve_gaussian__( helper );
+   __solve_gaussian__( helper, powers, powspace, linspace );
    __factor__( helper, p, q );
 
    delete [] helper;
@@ -129,126 +129,6 @@ void jans::sieve::__factor__( unsigned char * helper, jans::big_int & p, jans::b
    }
 
    std::cout << "Increase number of additional smooth ( x * x - N ) to be found!" << std::endl;
-
-}
-
-void jans::sieve::__solve_gaussian__( unsigned char * helper ) const{
-
-   unsigned char * lin_contributes = new unsigned char[ linspace ];
-   unsigned char * pow_contributes = new unsigned char[ powspace ];
-   for ( ubase_t lin = 0; lin < linspace; lin++ ){ lin_contributes[ lin ] = 1; }
-   for ( ubase_t pow = 0; pow < powspace; pow++ ){ pow_contributes[ pow ] = 1; }
-
-   ubase_t vecspace = linspace;
-   for ( ubase_t pow = 0; pow < powspace; pow++ ){
-      ubase_t num_odds = 0;
-      ubase_t last = linspace;
-      for ( ubase_t lin = 0; lin < linspace; lin++ ){
-         if ( ( powers[ pow + powspace * lin ] % 2 ) == 1 ){
-            num_odds++;
-            last = lin;
-            if ( num_odds == 2 ){ lin = linspace; }
-         }
-      }
-      if ( num_odds == 1 ){
-         vecspace--;
-         lin_contributes[ last ] = 0;
-      }
-   }
-
-   std::cout << "Removed " << linspace - vecspace << " of the " << linspace << " vectors with a unique odd prime power." << std::endl;
-
-   ubase_t redspace = powspace;
-   for ( ubase_t pow = 0; pow < powspace; pow++ ){
-      ubase_t num_odds = 0;
-      ubase_t lin = 0;
-      for ( ubase_t vec = 0; vec < vecspace; vec++ ){
-         while ( lin_contributes[ lin ] == 0 ){ lin++; }
-         if ( ( powers[ pow + powspace * lin ] % 2 ) == 1 ){
-            num_odds++;
-            vec = vecspace;
-         }
-         lin++;
-      }
-      if ( num_odds == 0 ){
-         redspace--;
-         pow_contributes[ pow ] = 0;
-      }
-   }
-
-   std::cout << "Removed " << powspace - redspace << " of the " << powspace << " primes with only even powers." << std::endl;
-
-   const ubase_t d_vec = vecspace;
-   const ubase_t d_lin = linspace;
-   const ubase_t d_red = redspace;
-   const ubase_t d_pow = powspace;
-   const ubase_t d_row = redspace + linspace;
-   const ubase_t d_sol = linspace - powspace;
-
-   unsigned char * matrix = new unsigned char[ d_row * d_vec ];
-
-   /*
-    * matrix = [  d_red x d_vec  ]
-    *          [  -------------  ]
-    *          [  d_lin x d_vec  ]
-    */
-
-   for ( ubase_t vec = 0; vec < d_vec; vec++ ){
-      for ( ubase_t row = 0; row < d_row; row++ ){
-         matrix[ row + d_row * vec ] = 0;
-      }
-   }
-
-   {
-      ubase_t lin = 0;
-      for ( ubase_t vec = 0; vec < d_vec; vec++ ){
-         while ( lin_contributes[ lin ] == 0 ){ lin++; }
-         ubase_t pow = 0;
-         for ( ubase_t red = 0; red < d_red; red++ ){
-            while ( pow_contributes[ pow ] == 0 ){ pow++; }
-            matrix[ red + d_row * vec ] = ( powers[ pow + d_pow * lin ] % 2 );
-            pow++;
-         }
-         matrix[ d_red + lin + d_row * vec ] = 1;
-         lin++;
-      }
-   }
-
-   delete [] lin_contributes;
-   delete [] pow_contributes;
-
-   ubase_t start_vec = 0;
-   for ( ubase_t red = 0; red < d_red; red++ ){
-      bool found   = false;
-      ubase_t iter = start_vec;
-      while ( ( found == false ) && ( iter < d_vec ) ){
-         if ( matrix[ red + d_row * iter ] == 1 ){ found = true; }
-         else { iter++; }
-      }
-      if ( found == true ){
-         if ( iter != start_vec ){
-            for ( ubase_t row = red; row < d_row; row++ ){
-               matrix[ row + d_row * start_vec ] = ( matrix[ row + d_row * iter ] ) ^ ( matrix[ row + d_row * start_vec ] );
-            }
-         }
-         for ( ubase_t vec = start_vec + 1; vec < d_vec; vec++ ){
-            if ( matrix[ red + d_row * vec ] == 1 ){
-               for ( ubase_t row = red; row < d_row; row++ ){
-                  matrix[ row + d_row * vec ] = ( matrix[ row + d_row * vec ] ) ^ ( matrix[ row + d_row * start_vec ] );
-               }
-            }
-         }
-         start_vec++;
-      }
-   }
-
-   for ( ubase_t sol = 0; sol < d_sol; sol++ ){
-      for ( ubase_t row = 0; row < d_lin; row++ ){
-         helper[ row + d_lin * sol ] = matrix[ d_red + row + d_row * ( d_vec - d_sol + sol ) ];
-      }
-   }
-
-   delete [] matrix;
 
 }
 

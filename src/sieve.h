@@ -82,7 +82,7 @@ namespace jans{
 
          void __sieving_grace__( const ubase_t blk_size, const double grace );
 
-         void __solve_gaussian__( unsigned char * helper ) const;
+         static void __solve_gaussian__( unsigned char * out, ubase_t * vectors, const ubase_t d_pow, const ubase_t d_lin );
 
          void __factor__( unsigned char * helper, jans::big_int & p, jans::big_int & q );
 
