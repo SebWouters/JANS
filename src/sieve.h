@@ -64,6 +64,8 @@ namespace jans{
 
          jans::big_int * xvalues;
 
+         jans::big_int * pvalues;
+
          ubase_t * powers;
 
          // Helper funcionality
@@ -80,7 +82,7 @@ namespace jans{
 
          static ubase_t __power__( const ubase_t num, const ubase_t pow, const ubase_t mod );
 
-         static void __root_quadratic_residue__( big_int & R, big_int & num, big_int & p );
+         static ubase_t __inv_x_mod_p__( jans::big_int & x, const ubase_t p );
 
          static ubase_t __root_quadratic_residue__( jans::big_int & num, const ubase_t p );
 
@@ -88,17 +90,17 @@ namespace jans{
 
          bool __extract__( big_int & x, ubase_t * powers ) const;
 
-         void __sieving_grace__( const ubase_t blk_size, const double grace );
+         void __check_sumlog__( const ubase_t size, double * sumlog, ubase_t * helper, const double grace, jans::big_int & a, jans::big_int & b );
 
          static void __solve_gaussian__( unsigned char * out, ubase_t * vectors, const ubase_t d_pow, const ubase_t d_lin );
 
          void __factor__( unsigned char * helper, jans::big_int & p, jans::big_int & q );
 
-         void __fill_sumlog__( double * sumlog, ubase_t * shift1, ubase_t * shift2, const ubase_t loopsize ) const;
-
-         void __select_q_list__( ubase_t * q_list, ubase_t * p_list, const ubase_t K, const ubase_t M );
-
          void __next_mpqs_p__( jans::big_int & a, jans::big_int & b );
+
+         void __calculate_shifts__( ubase_t * shift1, ubase_t * shift2, jans::big_int & a, jans::big_int & b );
+
+         void __sieve_sumlog__( const ubase_t size, double * sumlog, ubase_t * shift1, ubase_t * shift2 ) const;
 
    };
 

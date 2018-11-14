@@ -107,6 +107,10 @@ namespace jans{
 
          static ubase_t extract_pow_p( big_int & x, const ubase_t p );
 
+         static void randomize( big_int & n );
+
+         static bool miller_rabin( big_int & n, const ubase_t attempts );
+
       private:
 
          ubase_t * data;

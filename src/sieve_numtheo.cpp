@@ -112,8 +112,38 @@ bool jans::sieve::__extract__( big_int & x, ubase_t * helper ) const{
          return true;
       }
    }
+   //std::cout << "Remainder " << x.write( 10 ) << std::endl;
 
    return false;
+
+}
+
+ubase_t jans::sieve::__inv_x_mod_p__( jans::big_int & x, const ubase_t p ){
+
+   jans::big_int quot;
+   const ubase_t rem = jans::big_int::div( quot, x, p ); // rem = x % p
+   assert( jans::big_int::equal( quot, 0 ) == false );
+
+   int     a = 0;   // a = u_ini = 0
+   ubase_t g = p;   // g = w_ini = p
+   int     u = 1;   // u = a_ini - q * u_ini = 1 - q * 0 = 1
+   ubase_t w = rem; // w = g_ini - q * w_ini = x - q * p = x % p
+
+   while ( w > 0 ){
+      ubase_t q = g / w;
+      ubase_t r = g - q * w;
+      ubase_t s = a - q * u;
+      a = u;
+      g = w;
+      u = s;
+      w = r;
+   }
+   assert( g == 1 );
+
+   while ( a < 0 ){ a = a + p; }
+   ubase_t inverse_x = a;
+   assert( 1 == ( ( ( ucarry_t )( rem ) ) * inverse_x ) % p );
+   return inverse_x;
 
 }
 

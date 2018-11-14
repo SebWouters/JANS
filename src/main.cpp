@@ -177,7 +177,7 @@ int main()
 
    const int     factor   = 1024 / BASE_UNIT; // big_int contains factor * BASE_UNIT bits
    const int     bvalue   = 3700; //1350;
-   const ubase_t M        = 100000; //10000000; // 76 MB doubles
+   const ubase_t M        = 10000; //10000000; // 76 MB doubles
    const double  grace    = 8.0;
    const int     extra_sz = 11; // min. 1, liefst 11
 

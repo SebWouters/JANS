@@ -305,3 +305,66 @@ ubase_t jans::big_int::extract_pow_p( big_int & x, const ubase_t p ){
 
 }
 
+void jans::big_int::randomize( big_int & n ){
+
+   assert( RAND_MAX >= ( 1UL << CHAR_BIT ) );
+
+   n.lead = NUM_BLOCK;
+   __clear__( n.data );
+
+   for ( int in = 0; in < NUM_BLOCK; in++ ){
+      for ( int jn = 0; jn < ( BLOCK_BIT / CHAR_BIT ); jn++ ){
+         n.data[ in ] |= ( ( rand() & ( ( 1U << CHAR_BIT ) - 1 ) ) << jn );
+      }
+   }
+
+}
+
+bool jans::big_int::miller_rabin( big_int & n, const ubase_t attempts ){
+
+   if ( equal( n, 2 ) ){ return true; } // prime
+   if ( equal( n, 3 ) ){ return true; } // prime
+   if ( even( n ) ){ return false; } // composite
+
+   big_int u;
+   big_int work;
+   big_int temp;
+   big_int junk;
+   big_int check;
+
+   // n - 1 = 2^r * u
+   u.copy( n );
+   jans::big_int::minus( u, 1 );
+   const ubase_t r = extract_pow_p( u, 2 );
+
+   // check = n - 1
+   check.copy( n );
+   jans::big_int::minus( check, 1 );
+
+   for ( ubase_t cnt = 0; cnt < attempts; cnt++ ){
+
+      // random temp in [ 2 ... n - 2 ]
+      do {
+         randomize( temp );
+         __divide__( junk.data, junk.lead, temp.data, temp.lead, check.data, check.lead );
+      } while ( ( equal( temp, 0 ) ) || ( equal( temp, 1 ) ) );
+
+      // work = temp ^ u % n
+      power( work, temp, u, n );
+
+      bool ctu = ( ( equal( work, 1 ) == false ) && ( equal( work, check ) == false ) );
+
+      for ( ubase_t i = 0; ( ( i < r - 1 ) && ( ctu ) ); i++ ){
+         prod( temp, work, work );
+         div( junk, work, temp, n );
+         ctu = ( equal( work, check ) == false );
+      }
+
+      if ( ctu ){ return false; } // composite
+
+   }
+
+   return true;
+
+}
+
