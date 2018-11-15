@@ -299,12 +299,14 @@ void jans::big_int::__divide__( ubase_t * q, int & lq, ubase_t * r, int & lr, ub
       int comp = __compare__( r, temp );
       if ( comp >= 0 ){ q_min = q_max; }
 
-      while ( q_max > q_min + 1 ){
-         ubase_t q_test = ( ( ( ucarry_t ) q_max ) + ( ( ucarry_t ) q_min ) ) / 2;  // while condition implies q_min + 1 <= q_test <= q_max - 1
-         __mult2set__( temp, d, ld, q_test, iq );
-         comp = __compare__( r, temp );
-         if ( comp >= 0 ){ q_min = q_test; }
-                    else { q_max = q_test; }
+      if ( q_max != q_min ){ // If q_max = q_min = __11111111__, q_min + 1 == 0
+         while ( q_max > q_min + 1 ){
+            ubase_t q_test = ( ( ( ucarry_t ) q_max ) + ( ( ucarry_t ) q_min ) ) / 2;  // while condition implies q_min + 1 <= q_test <= q_max - 1
+            __mult2set__( temp, d, ld, q_test, iq );
+            comp = __compare__( r, temp );
+            if ( comp >= 0 ){ q_min = q_test; }
+                       else { q_max = q_test; }
+         }
       }
 
       q[ iq ] = q_min; // q_min contains solution

@@ -46,7 +46,7 @@ void jans::sieve::__solve_gaussian__( unsigned char * out, ubase_t * vectors, co
       }
    }
 
-   std::cout << "Removed " << d_lin - vecspace << " of the " << d_lin << " vectors with a unique odd prime power." << std::endl;
+   std::cout << "Gaussian elimination: Removed " << d_lin - vecspace << " of the " << d_lin << " vectors with a unique odd prime power." << std::endl;
 
    ubase_t redspace = d_pow;
    for ( ubase_t pow = 0; pow < d_pow; pow++ ){
@@ -66,7 +66,7 @@ void jans::sieve::__solve_gaussian__( unsigned char * out, ubase_t * vectors, co
       }
    }
 
-   std::cout << "Removed " << d_pow - redspace << " of the " << d_pow << " primes with only even powers." << std::endl;
+   std::cout << "Gaussian elimination: Removed " << d_pow - redspace << " of the " << d_pow << " primes with only even powers." << std::endl;
 
    const ubase_t d_vec = vecspace;
    const ubase_t d_red = redspace;
@@ -147,6 +147,8 @@ void jans::sieve::__solve_gaussian__( unsigned char * out, ubase_t * vectors, co
    }
 
    delete [] matrix;
+
+   std::cout << "Gaussian elimination: Finished." << std::endl;
 
 }
 
