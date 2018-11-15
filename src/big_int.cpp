@@ -308,12 +308,12 @@ ubase_t jans::big_int::random_ubase_t(){
 
 }
 
-void jans::big_int::randomize( big_int & n ){
+void jans::big_int::randomize( big_int & n, const int ln ){
 
-   n.lead = NUM_BLOCK;
+   n.lead = ln;
    __clear__( n.data );
 
-   for ( int in = 0; in < NUM_BLOCK; in++ ){
+   for ( int in = 0; in < ln; in++ ){
       n.data[ in ] = random_ubase_t();
    }
 
@@ -344,7 +344,7 @@ bool jans::big_int::miller_rabin( big_int & n, const ubase_t attempts ){
 
       // random temp in [ 2 ... n - 2 ]
       do {
-         randomize( temp );
+         randomize( temp, check.lead );
          __divide__( junk.data, junk.lead, temp.data, temp.lead, check.data, check.lead );
       } while ( ( equal( temp, 0 ) ) || ( equal( temp, 1 ) ) );
 

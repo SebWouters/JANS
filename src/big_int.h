@@ -111,7 +111,7 @@ namespace jans{
 
          static ubase_t random_ubase_t();
 
-         static void randomize( big_int & n );
+         static void randomize( big_int & n, const int ln );
 
          static bool miller_rabin( big_int & n, const ubase_t attempts );
 
