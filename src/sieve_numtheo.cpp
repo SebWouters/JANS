@@ -172,7 +172,7 @@ ubase_t jans::sieve::__root_quadratic_residue__( const ubase_t num, const ubase_
    ubase_t z = 0;
    int leg_sym = 0;
    while ( leg_sym != -1 ){
-      z = ( rand() % ( p - 2 ) ) + 2; // random number in [ 2 .. p - 1 ]
+      z = ( ( jans::big_int::random_ubase_t() ) % ( p - 2 ) ) + 2; // random number in [ 2 .. p - 1 ]
       leg_sym = __legendre_symbol__( z, p );
    }
 

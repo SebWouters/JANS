@@ -28,6 +28,8 @@ bool jans::big_int::nb_set = false;
 
 jans::big_int::big_int(){
 
+   assert( nb_set );
+
    lead = 0;
    data = new ubase_t[ NUM_BLOCK ];
    __clear__( data );
@@ -57,6 +59,7 @@ void jans::big_int::copy( const ubase_t value ){
 
 void jans::big_int::sanity_check(){
 
+   assert( RAND_MAX >= ( 1UL << CHAR_BIT ) );
    assert( sizeof( ucarry_t ) >= 2 * sizeof( ubase_t ) );
 
 }
@@ -64,6 +67,7 @@ void jans::big_int::sanity_check(){
 void jans::big_int::set_num_block( const int factor ){
 
    assert( nb_set == false );
+   assert( factor > 0 );
    NUM_BLOCK = ( ( factor * BASE_UNIT ) / BLOCK_BIT );
    nb_set = true;
 
@@ -98,12 +102,6 @@ bool jans::big_int::smaller( big_int & n1, const ubase_t n2 ){
 bool jans::big_int::even( big_int & n1 ){
 
    return ( ( n1.data[ 0 ] % 2 ) == 0 );
-
-}
-
-ubase_t jans::big_int::get_blk( const int i ){
-
-   return data[ i ];
 
 }
 
@@ -192,27 +190,6 @@ void jans::big_int::gcd( big_int & res, big_int & a, big_int & b ){
 
 }
 
-ubase_t jans::big_int::gcd( big_int & a, const ubase_t b ){
-
-   assert( ( a.lead > 1 ) || ( a.data[ 0 ] >= b ) );
-
-   ubase_t cpy[ NUM_BLOCK ];
-   __copy__( cpy, a.data );
-   int lq = a.lead;
-
-   ubase_t new_a = b;
-   ubase_t new_b = __divide__( cpy, lq, b ); // a mod b
-
-   while( new_b != 0 ){
-      ubase_t swap = new_b;
-      new_b = new_a % new_b;
-      new_a = swap;
-   }
-
-   return new_a;
-
-}
-
 void jans::big_int::prodmod( big_int & q, big_int & r, big_int & a, big_int & b, big_int & m ){
 
    r.lead = __mult3set__( r.data, a.data, a.lead, b.data, b.lead );
@@ -234,7 +211,7 @@ void jans::big_int::power( big_int & res, big_int & base, big_int & expo, big_in
 
    for ( int ie = 0; ie < work1.lead; ie++ ){
       for ( int je = 0; je < BLOCK_BIT; je++ ){
-         const bool to_multiply = ( ( work1.get_blk( ie ) >> je ) & 1U );
+         const bool to_multiply = ( ( work1.data[ ie ] >> je ) & 1U );
          if ( to_multiply ){
             prod( work3, work2, res );
             div( junk, res, work3, mod ); // res = ( work2 * res ) % mod
@@ -297,20 +274,6 @@ void jans::big_int::f2i( big_int & x, const long double number ){
 
 }
 
-void jans::big_int::xx_min_num( big_int & res, big_int & x, big_int & num ){
-
-   res.lead = __mult3set__( res.data, x.data, x.lead, x.data, x.lead );
-   res.lead = __diff3set__( res.data, res.data, num.data );
-
-}
-
-void jans::big_int::min_xx_plus_num( big_int & res, big_int & x, big_int & num ){
-
-   res.lead = __mult3set__( res.data, x.data, x.lead, x.data, x.lead );
-   res.lead = __diff3set__( res.data, num.data, res.data );
-
-}
-
 ubase_t jans::big_int::extract_pow_p( big_int & x, const ubase_t p ){
 
    assert( p > 1 );
@@ -335,17 +298,23 @@ ubase_t jans::big_int::extract_pow_p( big_int & x, const ubase_t p ){
 
 }
 
-void jans::big_int::randomize( big_int & n ){
+ubase_t jans::big_int::random_ubase_t(){
 
-   assert( RAND_MAX >= ( 1UL << CHAR_BIT ) );
+   ubase_t number = 0;
+   for ( int j = 0; j < ( BLOCK_BIT / CHAR_BIT ); j++ ){
+      number |= ( ( rand() & ( ( 1U << CHAR_BIT ) - 1 ) ) << ( j * CHAR_BIT ) );
+   }
+   return number;
+
+}
+
+void jans::big_int::randomize( big_int & n ){
 
    n.lead = NUM_BLOCK;
    __clear__( n.data );
 
    for ( int in = 0; in < NUM_BLOCK; in++ ){
-      for ( int jn = 0; jn < ( BLOCK_BIT / CHAR_BIT ); jn++ ){
-         n.data[ in ] |= ( ( rand() & ( ( 1U << CHAR_BIT ) - 1 ) ) << jn );
-      }
+      n.data[ in ] = random_ubase_t();
    }
 
 }

@@ -45,8 +45,6 @@ namespace jans{
 
          void copy( const ubase_t value );
 
-         ubase_t get_blk( const int i ); // data[ i ]
-
          static void sanity_check();
 
          static void set_num_block( const int factor );
@@ -103,19 +101,15 @@ namespace jans{
 
          static void gcd( big_int & res, big_int & a, big_int & b );
 
-         static ubase_t gcd( big_int & a, const ubase_t b ); // Returns gcd( a, b )
-
          static void power( big_int & res, big_int & base, big_int & expo, big_int & mod );
 
          static void prodmod( big_int & q, big_int & r, big_int & a, big_int & b, big_int & m ); // { q, r } = { ( a * b ) / m, ( a * b ) % m }
 
          static void ceil_sqrt( big_int & res, big_int & n );
 
-         static void xx_min_num( big_int & res, big_int & x, big_int & num );
-
-         static void min_xx_plus_num( big_int & res, big_int & x, big_int & num );
-
          static ubase_t extract_pow_p( big_int & x, const ubase_t p );
+
+         static ubase_t random_ubase_t();
 
          static void randomize( big_int & n );
 
@@ -131,9 +125,7 @@ namespace jans{
 
          static bool nb_set;
 
-         /******************************
-          *  Private static functions  *
-          ******************************/
+         // Basic functionality
 
          static void __clear__( ubase_t * a );
 
@@ -145,17 +137,9 @@ namespace jans{
 
          static void __shift_down__( ubase_t * a, const int k );
 
-         /********
-          *  IO  *
-          ********/
-
          static const char __conversion__[ 16 ];
 
-
-
-         /*************************
-          *  Basic math routines  *
-          *************************/
+         // Internal math routines
 
          // r = a + b; if (( r != a ) && ( r != b )){ __clear__( r ); }
          static int __sum3set__( ubase_t * r, ubase_t * a, const int la, ubase_t * b, const int lb );
