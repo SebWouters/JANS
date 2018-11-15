@@ -28,12 +28,12 @@ void jans::sieve::__startup1__(){
    ubase_t rem;
 
    jans::big_int::prod( work, target, 2 );      // work   = 2 * N
-   jans::big_int::ceil_sqrt( mpqs_p, work );    // mpqs_p = ceil( sqrt( 2N ) )
-   rem = jans::big_int::div( work, mpqs_p, M ); // work   = floor( ceil( sqrt( 2N ) ) / M )
-   jans::big_int::ceil_sqrt( mpqs_p, work );    // mpqs_p = ceil( sqrt( floor( ceil( sqrt( 2N ) ) / M ) ) )
+   jans::big_int::ceil_sqrt( mpqs_q, work );    // mpqs_q = ceil( sqrt( 2N ) )
+   rem = jans::big_int::div( work, mpqs_q, M ); // work   = floor( ceil( sqrt( 2N ) ) / M )
+   jans::big_int::ceil_sqrt( mpqs_q, work );    // mpqs_q = ceil( sqrt( floor( ceil( sqrt( 2N ) ) / M ) ) )
 
-   rem = jans::big_int::div( work, mpqs_p, 4 );
-   jans::big_int::minus( mpqs_p, 1 + rem ); // mpqs_p % 4 = 3
+   rem = jans::big_int::div( work, mpqs_q, 4 );
+   jans::big_int::minus( mpqs_q, 1 + rem ); // mpqs_q % 4 = 3
 
 }
 

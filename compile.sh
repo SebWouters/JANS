@@ -1,6 +1,6 @@
 #g++ -g
 g++ -O3 -march=native -flto\
-    src/main.cpp\
+    src/executable.cpp\
     src/big_int.cpp\
     src/big_int_math.cpp\
     src/big_int_io.cpp\

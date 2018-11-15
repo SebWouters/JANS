@@ -20,5 +20,55 @@ with this program; if not, write to the Free Software Foundation, Inc.,
 Information
 -----------
 
-Work in progress
+JANS is a Multiple Polynomial Quadratic Sieve (MPQS)
+to factor a large number N. The sieving function is:
+
+    f(x) = ax^2 + 2bx + c with x in [-M, M].
+
+      --> a = q^2 <= sqrt(2N)/M
+      --> q a prime
+      --> q [mod 4] = 3
+
+The MPQS attempts to factor f(x) over primes p <= F.
+With sufficient factorizations, the program builds Z
+congruences
+
+    Y^2 = X^2  [mod N].
+
+With probability 1 - (1/2)^Z a factor gcd( X-Y, N )
+of N is retrieved which is non-trivial.
+
+Arguments
+---------
+
+    -N, --number=integer
+           Number to factorize.
+
+    -F, --factorbound=integer
+           Upper bound for factor base primes p <= F.
+
+    -M, --sievespace=integer
+           x in [-M, M] whereby M >= F.
+
+    -Z, --congruences=integer
+           Number of congruences to construct (default 11).
+
+    -T, --threshold=float
+           Threshold for attempting trial division (default 8.0).
+
+    -B, --bits=integer
+           Large integer bit precision. Should be a multiple of 256 (default 1024).
+
+    -v, --version
+           Print the version.
+
+    -h, --help
+           Display this help.
+
+Examples
+--------
+
+    $ jans -N 61421677127643670816789 -F 1350 -M 10000
+    $ jans -N 11111111111111111111111111111 -F 3652 -M 10000
+    $ jans -N 4205940337640636327774357502033476724941 -F 25499 -M 40000
 

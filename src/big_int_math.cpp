@@ -290,7 +290,8 @@ void jans::big_int::__divide__( ubase_t * q, int & lq, ubase_t * r, int & lr, ub
       } else {
          num = r[ ir ];
       }
-      ubase_t q_max = num / ( d[ ld - 1 ] );
+      ucarry_t bnd  = num / ( d[ ld - 1 ] );
+      ubase_t q_max = ( ( bnd > __11111111__ ) ? __11111111__ : bnd );
       ubase_t q_min = num / ( d[ ld - 1 ] + 1UL );
 
       ubase_t temp[ NUM_BLOCK ];
@@ -344,27 +345,14 @@ int jans::big_int::__gcd__( ubase_t * res, ubase_t * a, const int la, ubase_t * 
 
 }
 
-int jans::big_int::__ceil_sqrt__( ubase_t * d, ubase_t * num, const int ln ){
+int jans::big_int::__ceil_sqrt__( ubase_t * d, const int ld_in, ubase_t * num, const int ln ){
 
    // Solves for d = ceil( sqrt( num ) )
    // Babylonian method: x_new = ( x + N / x ) / 2
 
    ubase_t q[ NUM_BLOCK ]; __clear__( q ); int lq = 0;
    ubase_t r[ NUM_BLOCK ]; __clear__( r ); int lr = 0;
-                           __clear__( d ); int ld = 0;
-
-   // Guess the sqrt and put it in (d, ld)
-   {
-      int lb = 0;
-      for ( int j = 0; j < BLOCK_BIT; j++ ){
-         if ( ( num[ j ] >> j ) & 1UL ){ lb = j; }
-      }
-      lb = ( lb + BLOCK_BIT * ( ln - 1 ) ) / 2;
-      int id = lb / BLOCK_BIT;
-      int jd = lb - BLOCK_BIT * id;
-      d[ id ] = ( 1UL << jd );
-      ld = id + 1;
-   }
+   int ld = ld_in;
 
    while ( true ){
 
@@ -385,7 +373,7 @@ int jans::big_int::__ceil_sqrt__( ubase_t * d, ubase_t * num, const int ln ){
       }
 
       if ( comp1 < 0 ){                         // d^2 < num
-         __sum3set__( q, q, lq, r, lr );        // q = ( d + 1 )^2
+         lq = __sum3set__( q, q, lq, r, lr );   // q = ( d + 1 )^2
          const int comp2 = __compare__( q, num );
          if ( comp2 >= 0 ){                     // ( d + 1 )^2 >= num > d^2
             ld = __sum1__( d, ld, 1 );

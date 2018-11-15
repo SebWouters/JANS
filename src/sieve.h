@@ -32,6 +32,8 @@ namespace jans{
 
          virtual ~sieve();
 
+         static ucarry_t optimal_factorbound( jans::big_int & number );
+
          void run( jans::big_int & p, jans::big_int & q, const double grace );
 
       private:
@@ -40,7 +42,7 @@ namespace jans{
 
          jans::big_int target; // N
 
-         jans::big_int mpqs_p; // number near ( 2N )^0.25 / sqrt( M )
+         jans::big_int mpqs_q; // number near ( 2N )^0.25 / sqrt( M )
 
          // Factor base information
 
@@ -96,7 +98,7 @@ namespace jans{
 
          void __factor__( unsigned char * helper, jans::big_int & p, jans::big_int & q );
 
-         void __next_mpqs_p__( jans::big_int & a, jans::big_int & b );
+         void __next_mpqs_q__( jans::big_int & a, jans::big_int & b );
 
          void __calculate_shifts__( ubase_t * shift1, ubase_t * shift2, jans::big_int & a, jans::big_int & b );
 

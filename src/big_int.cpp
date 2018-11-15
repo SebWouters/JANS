@@ -248,11 +248,14 @@ void jans::big_int::power( big_int & res, big_int & base, big_int & expo, big_in
 
 void jans::big_int::ceil_sqrt( big_int & res, big_int & n ){
 
-   res.lead = __ceil_sqrt__( res.data, n.data, n.lead );
+   long double number = i2f( n );
+   number = sqrt( number );
+   f2i( res, number );
+   res.lead = __ceil_sqrt__( res.data, res.lead, n.data, n.lead );
 
 }
 
-double jans::big_int::logarithm( big_int & x ){
+long double jans::big_int::i2f( big_int & x ){
 
    long double result = 0.0;
    long double base   = 1.0;
@@ -262,8 +265,35 @@ double jans::big_int::logarithm( big_int & x ){
       base   = base * ( 1UL << BLOCK_BIT );
    }
 
-   result = log( result );
-   return ( ( double )( result ) );
+   return result;
+
+}
+
+void jans::big_int::f2i( big_int & x, const long double number ){
+
+   long double remainder = number;
+   long double index     = log2( remainder );
+
+   __clear__( x.data );
+   x.lead = 0;
+
+   while ( index >= 0.0 ){
+
+      const int idx = ( int )( index );
+      const int ix  = idx / BLOCK_BIT;
+      const int jx  = idx % BLOCK_BIT;
+
+      x.data[ ix ] |= ( 1U << jx );
+      if ( ix + 1 > x.lead ){ x.lead = ix + 1; }
+
+      long double set = 1.0;
+      for ( int cnt = 0; cnt < ix; cnt++ ){ set = set * ( 1UL << BLOCK_BIT ); }
+      set = set * ( 1U << jx );
+
+      remainder = remainder - set;
+      index = log2( remainder );
+
+   }
 
 }
 

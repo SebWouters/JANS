@@ -23,14 +23,14 @@
 
 const char jans::big_int::__conversion__[ 16 ] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
 
-ubase_t jans::big_int::__convert_c2i__( const char c ){
+ubase_t jans::big_int::convert_c2i( const char c ){
 
    for ( ubase_t i = 0; i < 16; i++ ){ if ( c == __conversion__[ i ] ){ return i; } }
    return 17; // Error code
 
 }
 
-char jans::big_int::__convert_i2c__( const ubase_t c ){
+char jans::big_int::convert_i2c( const ubase_t c ){
 
    if ( c >= 16 ){ return 'z'; } // Error code
    return __conversion__[ c ];
@@ -49,7 +49,7 @@ void jans::big_int::read( const std::string number, const ubase_t base ){
    int ls = 1;
 
    for ( int i = number.size() - 1; i >= 0; i-- ){
-      const ubase_t digit = __convert_c2i__( number.at( i ) );
+      const ubase_t digit = convert_c2i( number.at( i ) );
       assert( digit != 17 );
       if ( digit != 0 ){
          lead = __mult2add__( data, lead, shift, ls, digit, 0 );
@@ -97,7 +97,7 @@ std::string jans::big_int::write( const ubase_t base ) const{
    int ln = lead;
    int c = 0;
    while ( ( ln > 0 ) || ( num[ 0 ] != 0 ) ){
-      text[ text_size - 1 - c ] = __convert_i2c__( __divide__( num, ln, base ) );
+      text[ text_size - 1 - c ] = convert_i2c( __divide__( num, ln, base ) );
       c++;
    }
 

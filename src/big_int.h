@@ -47,9 +47,25 @@ namespace jans{
 
          ubase_t get_blk( const int i ); // data[ i ]
 
+         static void sanity_check();
+
+         static void set_num_block( const int factor );
+
+         // IO
+
          void read( const std::string number, const ubase_t base );
 
          std::string write( const ubase_t base ) const;
+
+         static ubase_t convert_c2i( const char c );
+
+         static char convert_i2c( const ubase_t c );
+
+         static long double i2f( big_int & x );
+
+         static void f2i( big_int & x, const long double number );
+
+         // Basic operations
 
          static bool equal( big_int & n1, big_int & n2 ); // ( n1 == n2 )
 
@@ -60,10 +76,6 @@ namespace jans{
          static bool smaller( big_int & n1, const ubase_t n2 );
 
          static bool even( big_int & n1 );
-
-         static void sanity_check();
-
-         static void set_num_block( const int factor );
 
          // Generic math operations
 
@@ -86,8 +98,6 @@ namespace jans{
          static void div( big_int & q, big_int & r, big_int & n, big_int & d );
 
          static ubase_t div( big_int & q, big_int & n, const ubase_t d ); // Returns remainder
-
-         static double logarithm( big_int & x );
 
          // Number theory operations
 
@@ -141,9 +151,7 @@ namespace jans{
 
          static const char __conversion__[ 16 ];
 
-         static ubase_t __convert_c2i__( const char c );
 
-         static char __convert_i2c__( const ubase_t c );
 
          /*************************
           *  Basic math routines  *
@@ -186,7 +194,7 @@ namespace jans{
          static int __gcd__( ubase_t * res, ubase_t * a, const int la, ubase_t * b, const int lb );
 
          // Solves for d = ceil( sqrt( num ) )
-         static int __ceil_sqrt__( ubase_t * d, ubase_t * num, const int ln );
+         static int __ceil_sqrt__( ubase_t * d, const int ld, ubase_t * num, const int ln );
 
    };
 
