@@ -73,7 +73,8 @@ void jans::sieve::__solve_gaussian__( unsigned char * out, ubase_t * vectors, co
    const ubase_t d_row = d_red + d_lin;
    const ubase_t d_sol = d_lin - d_pow;
 
-   unsigned char * matrix = new unsigned char[ d_row * d_vec ];
+   const ubase_t N_row = ( d_row / CHAR_BIT ) + ( ( ( d_row % CHAR_BIT ) > 0 ) ? 1 : 0 );
+   unsigned char * matrix = new unsigned char[ N_row * d_vec ];
 
    /*
     * matrix = [  d_red x d_vec  ]
@@ -82,8 +83,8 @@ void jans::sieve::__solve_gaussian__( unsigned char * out, ubase_t * vectors, co
     */
 
    for ( ubase_t vec = 0; vec < d_vec; vec++ ){
-      for ( ubase_t row = 0; row < d_row; row++ ){
-         matrix[ row + d_row * vec ] = 0;
+      for ( ubase_t row = 0; row < N_row; row++ ){
+         matrix[ row + N_row * vec ] = 0;
       }
    }
 
@@ -94,10 +95,10 @@ void jans::sieve::__solve_gaussian__( unsigned char * out, ubase_t * vectors, co
          ubase_t pow = 0;
          for ( ubase_t red = 0; red < d_red; red++ ){
             while ( pow_contributes[ pow ] == 0 ){ pow++; }
-            matrix[ red + d_row * vec ] = ( vectors[ pow + d_pow * lin ] % 2 );
+            matrix[ ( red / CHAR_BIT ) + N_row * vec ] |= ( ( ( unsigned char )( vectors[ pow + d_pow * lin ] % 2 ) ) << ( red % CHAR_BIT ) );
             pow++;
          }
-         matrix[ d_red + lin + d_row * vec ] = 1;
+         matrix[ ( ( d_red + lin ) / CHAR_BIT ) + N_row * vec ] |= ( ( ( unsigned char )( 1 ) ) << ( ( d_red + lin ) % CHAR_BIT ) );
          lin++;
       }
    }
@@ -105,26 +106,31 @@ void jans::sieve::__solve_gaussian__( unsigned char * out, ubase_t * vectors, co
    delete [] lin_contributes;
    delete [] pow_contributes;
 
+
    ubase_t start = 0;
    for ( ubase_t red = 0; red < d_red; red++ ){
       bool found   = false;
       ubase_t iter = start;
+      ubase_t       ix = red / CHAR_BIT;
+      unsigned char iy = red % CHAR_BIT;
       while ( ( found == false ) && ( iter < d_vec ) ){
-         if ( matrix[ red + d_row * iter ] == 1 ){ found = true; }
+         if ( ( matrix[ ix + N_row * iter ] >> iy ) & ( ( unsigned char )( 1 ) ) ){ found = true; }
          else { iter++; }
       }
       if ( found == true ){
          if ( iter != start ){
-            for ( ubase_t row = red; row < d_row; row++ ){
-               unsigned char swap            = matrix[ row + d_row * iter  ];
-               matrix[ row + d_row * iter  ] = matrix[ row + d_row * start ];
-               matrix[ row + d_row * start ] = swap;
+            for ( ubase_t row = ix; row < N_row; row++ ){
+               // Everything above specific bit has been cleared: bit-wise swapping (also for preceding bits) is OK.
+               unsigned char swap            = matrix[ row + N_row * iter  ];
+               matrix[ row + N_row * iter  ] = matrix[ row + N_row * start ];
+               matrix[ row + N_row * start ] = swap;
             }
          }
          for ( ubase_t vec = iter + 1; vec < d_vec; vec++ ){
-            if ( matrix[ red + d_row * vec ] == 1 ){
-               for ( ubase_t row = red; row < d_row; row++ ){
-                  matrix[ row + d_row * vec ] = ( matrix[ row + d_row * vec ] ) ^ ( matrix[ row + d_row * start ] );
+            if ( ( matrix[ ix + N_row * vec ] >> iy ) & ( ( unsigned char )( 1 ) ) ){
+               for ( ubase_t row = ix; row < N_row; row++ ){
+                  // Everything above specific bit has been cleared: bit-wise XOR (also for preceding bits) is OK.
+                  matrix[ row + N_row * vec ] = ( matrix[ row + N_row * vec ] ) ^ ( matrix[ row + N_row * start ] );
                }
             }
          }
@@ -134,7 +140,9 @@ void jans::sieve::__solve_gaussian__( unsigned char * out, ubase_t * vectors, co
 
    for ( ubase_t sol = 0; sol < d_sol; sol++ ){
       for ( ubase_t row = 0; row < d_lin; row++ ){
-         out[ row + d_lin * sol ] = matrix[ d_red + row + d_row * ( d_vec - d_sol + sol ) ];
+         ubase_t       ix = ( d_red + row ) / CHAR_BIT;
+         unsigned char iy = ( d_red + row ) % CHAR_BIT;
+         out[ row + d_lin * sol ] = ( ( matrix[ ix + N_row * ( d_vec - d_sol + sol ) ] >> iy ) & ( ( unsigned char )( 1 ) ) );
       }
    }
 
