@@ -28,13 +28,13 @@ namespace jans{
 
       public:
 
-         sieve( jans::big_int & num, const ubase_t B, const ubase_t M, const int extra );
+         sieve( jans::big_int & num, const ubase_t factorbound, const ubase_t sievespace, const int extra );
 
          virtual ~sieve();
 
          static ucarry_t optimal_factorbound( jans::big_int & number );
 
-         void run( jans::big_int & p, jans::big_int & q, const double grace );
+         void run( jans::big_int & sol_p, jans::big_int & sol_q, const double threshold );
 
       private:
 
@@ -56,7 +56,7 @@ namespace jans{
 
          // Intermediate sieve results
 
-         int extra_sz;
+         int extra;
 
          int powspace; // num_primes + 1 ( to account for sign Q(x) )
 
@@ -71,10 +71,6 @@ namespace jans{
          ubase_t * powers;
 
          // Helper funcionality
-
-         void __startup1__();
-
-         void __startup2__( const ubase_t bound );
 
          static int __legendre_symbol__( jans::big_int & num, jans::big_int & p );
 
@@ -92,17 +88,23 @@ namespace jans{
 
          bool __extract__( big_int & x, ubase_t * powers ) const;
 
-         void __check_sumlog__( const ubase_t size, double * sumlog, ubase_t * helper, const double grace, jans::big_int & a, jans::big_int & b );
+         // The core routines, in order
 
-         static void __solve_gaussian__( unsigned char * out, ubase_t * vectors, const ubase_t d_pow, const ubase_t d_lin );
+         void __startup1__();
 
-         void __factor__( unsigned char * helper, jans::big_int & p, jans::big_int & q );
+         void __startup2__( const ubase_t bound );
 
          void __next_mpqs_q__( jans::big_int & a, jans::big_int & b );
 
          void __calculate_shifts__( ubase_t * shift1, ubase_t * shift2, jans::big_int & a, jans::big_int & b );
 
          void __sieve_sumlog__( const ubase_t size, double * sumlog, ubase_t * shift1, ubase_t * shift2 ) const;
+
+         void __check_sumlog__( const ubase_t size, double * sumlog, ubase_t * helper, const double threshold, jans::big_int & a, jans::big_int & b );
+
+         static void __solve_gaussian__( unsigned char * out, ubase_t * vectors, const ubase_t d_pow, const ubase_t d_lin );
+
+         void __factor__( unsigned char * helper, jans::big_int & p, jans::big_int & q );
 
    };
 
