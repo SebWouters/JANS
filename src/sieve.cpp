@@ -108,17 +108,17 @@ void jans::sieve::__next_mpqs_q__( jans::big_int & a, jans::big_int & b ){
          }
       }
 
-      // Check 2: Miller Rabin
-      if ( okprime == true ){
-         okprime = jans::big_int::miller_rabin( mpqs_q, 20 );
-      }
-
-      // Check 3: (n/p) == 1
+      // Check 2: (n/p) == 1
       if ( okprime == true ){
          const int symbol = __legendre_symbol__( target, mpqs_q );
          if ( symbol != 1 ){
             okprime = false;
          }
+      }
+
+      // Check 3: Miller Rabin
+      if ( okprime == true ){
+         okprime = jans::big_int::miller_rabin( mpqs_q, 12 );
       }
 
       // Check 4: calculate b under assumption mpqs_q prime and check b * b == n ( mod mpqs_q * mpqs_q )
