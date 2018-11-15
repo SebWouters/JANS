@@ -18,8 +18,6 @@
 */
 
 #include <assert.h>
-#include <stdio.h>
-#include <iostream>
 
 #include "sieve.h"
 
@@ -112,7 +110,6 @@ bool jans::sieve::__extract__( big_int & x, ubase_t * helper ) const{
          return true;
       }
    }
-   //std::cout << "Remainder " << x.write( 10 ) << std::endl;
 
    return false;
 
@@ -201,15 +198,15 @@ ubase_t jans::sieve::__root_quadratic_residue__( const ubase_t num, const ubase_
       // Calculate c^{2^{M-i-1}} mod p
       ubase_t j = 0;
       b = c;
-      while ( j < M - i - 1 ){
+      while ( j + i + 1 < M ){
          j++;
          b = ( b * b ) % p; // c^{2^j} mod p
       }
 
-      M = i;             // M decreases each iteration!
-      c = ( b * b ) % p; // c'^{2^{M'-1}} =   (b^2)^{2^{i-1}} = c^{2^{M-1}}             = -1   mod p
-      t = ( t * c ) % p; // t'^{2^{M'-1}} = (t.b^2)^{2^{i-1}} = t^{2^{i-1}}.c^{2^{M-1}} = +1   mod p
-      R = ( R * b ) % p; // R'^2          = (R.b)^2           = n.t.b^2                 = n.t' mod p
+      M = i;                             // M decreases each iteration!
+      c = ( b * b ) % p;                 // c'^{2^{M'-1}} =   (b^2)^{2^{i-1}} = c^{2^{M-1}}             = -1   mod p
+      t = ( ( ( t * b ) % p ) * b ) % p; // t'^{2^{M'-1}} = (t.b^2)^{2^{i-1}} = t^{2^{i-1}}.c^{2^{M-1}} = +1   mod p
+      R = ( R * b ) % p;                 // R'^2          = (R.b)^2           = n.t.b^2                 = n.t' mod p
 
    }
 

@@ -98,8 +98,6 @@ void jans::sieve::__next_mpqs_q__( jans::big_int & a, jans::big_int & b ){
       jans::big_int::minus( mpqs_q, 4 ); // To keep p % 4 == 3  and  p * p <= sqrt(2N)/M
       okprime = true;
 
-      //std::cout << "Candidate p = " << mpqs_q.write( 10 ) << std::endl;
-
       // Check 1: factor base does not divide mpqs_q --> if not probably prime then
       for ( int ip = 0; ip < num_primes; ip++ ){
          const ubase_t rem = jans::big_int::div( a, mpqs_q, primes[ ip ] );
@@ -108,12 +106,10 @@ void jans::sieve::__next_mpqs_q__( jans::big_int & a, jans::big_int & b ){
             ip = num_primes;
          }
       }
-      //std::cout << "Factor base division says " << ( ( okprime ) ? "prime" : "NOT prime" ) << std::endl;
 
       // Check 2: Miller Rabin
       if ( okprime == true ){
          okprime = jans::big_int::miller_rabin( mpqs_q, 20 );
-         //std::cout << "Miller Rabin says " << ( ( okprime ) ? "prime" : "NOT prime" ) << std::endl;
       }
 
       // Check 3: (n/p) == 1
@@ -122,13 +118,10 @@ void jans::sieve::__next_mpqs_q__( jans::big_int & a, jans::big_int & b ){
          if ( symbol != 1 ){
             okprime = false;
          }
-         //std::cout << "Legendre symbol says" << ( ( okprime ) ? " a " : " NOT a " ) << "suitable prime" << ( ( okprime ) ? " <==============" : "" ) << std::endl;
       }
 
       // Check 4: calculate b under assumption mpqs_q prime and check b * b == n ( mod mpqs_q * mpqs_q )
       if ( okprime == true ){
-
-         //std::cout << "Candidate p = " << mpqs_q.write( 10 ) << std::endl;
 
          jans::big_int work1;
          jans::big_int work2;
@@ -218,10 +211,6 @@ void jans::sieve::__factor__( unsigned char * helper, jans::big_int & p, jans::b
          pow = pow / 2;
          work2.copy( pow );
          work1.copy( primes[ ip ] );
-         //for ( ubase_t it = 0; it < pow; it++ ){
-         //   jans::big_int::prod( work1, y, primes[ ip ] );
-         //   jans::big_int::div( work2, y, work1, target );
-         //}
          jans::big_int::power( work3, work1, work2, target ); // work3 = prime ^ ( pow ) % N
          jans::big_int::prod( work1, y, work3 );
          jans::big_int::div( work2, y, work1, target ); // y *= work3 % N
@@ -297,11 +286,6 @@ void jans::sieve::__check_sumlog__( const ubase_t size, double * sumlog, ubase_t
       jans::big_int::prod( work2, a,     abs_x );
       jans::big_int::prod( work1, work2, abs_x );
       jans::big_int::prod( work2, b, 2 * abs_x );
-      //std::cout << "a  = " << a.write( 10 ) << std::endl;
-      //std::cout << "b  = " << b.write( 10 ) << std::endl;
-      //std::cout << "w1 = " << work1.write( 10 ) << std::endl;
-      //std::cout << "w2 = " << work2.write( 10 ) << std::endl;
-      //std::cout << "|x|= " << abs_x << std::endl;
       if ( cnt < M ){ jans::big_int::diff( work1, work1, work2 ); }
                else { jans::big_int::sum(  work1, work1, work2 ); }
 
@@ -325,7 +309,6 @@ void jans::sieve::__check_sumlog__( const ubase_t size, double * sumlog, ubase_t
             for ( int ip = 0; ip < num_primes; ip++ ){
                powers[ lincount * powspace + 1 + ip ] = helper[ ip ];
             }
-            //std::cout << "B-smooth f(x) no. " << lincount << std::endl;
             lincount++;
          }
       }
