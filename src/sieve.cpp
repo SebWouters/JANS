@@ -42,13 +42,14 @@ jans::sieve::sieve( jans::big_int & num, const ubase_t factorbound, const ubase_
    linspace = powspace + extra;
 
    // Don't create overflows
-   assert( ( ( ( ucarry_t )( linspace ) ) * ( ( ucarry_t )( powspace ) ) ) <= ( INT_MAX ) );
+   const ucarry_t size_powers = ( (( ucarry_t )( linspace )) * (( ucarry_t )( powspace )) );
+   assert( size_powers <= LLONG_MAX );
 
    lincount = 0;
    xvalues  = new jans::big_int[ linspace ];
    pvalues  = new jans::big_int[ linspace ];
-   powers   = new ubase_t[ linspace * powspace ];
-   for ( int cnt = 0; cnt < ( linspace * powspace ); cnt++ ){ powers[ cnt ] = 0; }
+   powers   = new ubase_t[ size_powers ];
+   for ( ucarry_t cnt = 0; cnt < size_powers; cnt++ ){ powers[ cnt ] = 0; }
 
 }
 
@@ -100,7 +101,9 @@ void jans::sieve::run( jans::big_int & sol_p, jans::big_int & sol_q, const doubl
       delete [] sumlog;
    }
 
-   unsigned char * helper = new unsigned char[ extra * linspace ];
+   const ucarry_t size_helper = extra * (( ucarry_t )( linspace ));
+   assert( size_helper <= INT_MAX );
+   unsigned char * helper = new unsigned char[ size_helper ];
    __solve_gaussian__( helper, powers, powspace, linspace );
    __factor__( helper, sol_p, sol_q );
    delete [] helper;
@@ -207,7 +210,7 @@ void jans::sieve::__factor__( unsigned char * helper, jans::big_int & p, jans::b
       for ( int ip = 0; ip < num_primes; ip++ ){
          ubase_t pow = 0;
          for ( int vec = 0; vec < linspace; vec++ ){
-            if ( helper[ vec + linspace * sol ] == 1 ){ pow += powers[ 1 + ip + powspace * vec ]; }
+            if ( helper[ vec + linspace * sol ] == 1 ){ pow += powers[ 1 + ip + (( ucarry_t )( powspace )) * vec ]; }
          }
          assert( pow % 2 == 0 );
          pow = pow / 2;
@@ -310,9 +313,9 @@ void jans::sieve::__check_sumlog__( const ubase_t size, double * sumlog, ubase_t
                if ( lincount < linspace ){
                   xvalues[ lincount ].copy( work1 );
                   pvalues[ lincount ].copy( mpqs_q );
-                  powers[ lincount * powspace + 0 ] = ( ( negative ) ? 1 : 0 );
+                  powers[ lincount * (( ucarry_t )( powspace )) + 0 ] = ( ( negative ) ? 1 : 0 );
                   for ( int ip = 0; ip < num_primes; ip++ ){
-                     powers[ lincount * powspace + 1 + ip ] = helper[ ip ];
+                     powers[ lincount * (( ucarry_t )( powspace )) + 1 + ip ] = helper[ ip ];
                   }
                   lincount++;
                }

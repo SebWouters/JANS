@@ -1,6 +1,6 @@
 #g++ -g
-#icpc -flto -xHost -ipo -O3 -Wall\
-g++ -O3 -march=native -flto -fopenmp -funroll-loops\
+#g++ -O3 -march=native -flto -fopenmp -funroll-loops\
+icpc -flto -xHost -qopenmp -ipo -O3 -Wall\
     src/executable.cpp\
     src/big_int.cpp\
     src/big_int_math.cpp\

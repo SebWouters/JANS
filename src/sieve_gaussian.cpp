@@ -34,7 +34,7 @@ void jans::sieve::__solve_gaussian__( unsigned char * out, ubase_t * vectors, co
       ubase_t num_odds = 0;
       ubase_t last = d_lin;
       for ( ubase_t lin = 0; lin < d_lin; lin++ ){
-         if ( ( vectors[ pow + d_pow * lin ] % 2 ) == 1 ){
+         if ( ( vectors[ pow + (( ucarry_t )( d_pow )) * lin ] % 2 ) == 1 ){
             num_odds++;
             last = lin;
             if ( num_odds == 2 ){ lin = d_lin; }
@@ -54,7 +54,7 @@ void jans::sieve::__solve_gaussian__( unsigned char * out, ubase_t * vectors, co
       ubase_t lin = 0;
       for ( ubase_t vec = 0; vec < vecspace; vec++ ){
          while ( lin_contributes[ lin ] == 0 ){ lin++; }
-         if ( ( vectors[ pow + d_pow * lin ] % 2 ) == 1 ){
+         if ( ( vectors[ pow + (( ucarry_t )( d_pow )) * lin ] % 2 ) == 1 ){
             num_odds++;
             vec = vecspace;
          }
@@ -74,7 +74,7 @@ void jans::sieve::__solve_gaussian__( unsigned char * out, ubase_t * vectors, co
    const ubase_t d_sol = d_lin - d_pow;
 
    const ubase_t N_row = ( d_row / CHAR_BIT ) + ( ( ( d_row % CHAR_BIT ) > 0 ) ? 1 : 0 );
-   unsigned char * matrix = new unsigned char[ N_row * d_vec ];
+   unsigned char * matrix = new unsigned char[ (( ucarry_t )( N_row )) * d_vec ];
 
    /*
     * matrix = [  d_red x d_vec  ]
@@ -84,7 +84,7 @@ void jans::sieve::__solve_gaussian__( unsigned char * out, ubase_t * vectors, co
 
    for ( ubase_t vec = 0; vec < d_vec; vec++ ){
       for ( ubase_t row = 0; row < N_row; row++ ){
-         matrix[ row + N_row * vec ] = 0;
+         matrix[ row + (( ucarry_t )( N_row )) * vec ] = 0;
       }
    }
 
@@ -95,10 +95,10 @@ void jans::sieve::__solve_gaussian__( unsigned char * out, ubase_t * vectors, co
          ubase_t pow = 0;
          for ( ubase_t red = 0; red < d_red; red++ ){
             while ( pow_contributes[ pow ] == 0 ){ pow++; }
-            matrix[ ( red / CHAR_BIT ) + N_row * vec ] |= ( ( ( unsigned char )( vectors[ pow + d_pow * lin ] % 2 ) ) << ( red % CHAR_BIT ) );
+            matrix[ ( red / CHAR_BIT ) + (( ucarry_t )( N_row )) * vec ] |= ( ( ( unsigned char )( vectors[ pow + (( ucarry_t )( d_pow )) * lin ] % 2 ) ) << ( red % CHAR_BIT ) );
             pow++;
          }
-         matrix[ ( ( d_red + lin ) / CHAR_BIT ) + N_row * vec ] |= ( ( ( unsigned char )( 1 ) ) << ( ( d_red + lin ) % CHAR_BIT ) );
+         matrix[ ( ( d_red + lin ) / CHAR_BIT ) + (( ucarry_t )( N_row )) * vec ] |= ( ( ( unsigned char )( 1 ) ) << ( ( d_red + lin ) % CHAR_BIT ) );
          lin++;
       }
    }
@@ -114,23 +114,23 @@ void jans::sieve::__solve_gaussian__( unsigned char * out, ubase_t * vectors, co
       ubase_t       ix = red / CHAR_BIT;
       unsigned char iy = red % CHAR_BIT;
       while ( ( found == false ) && ( iter < d_vec ) ){
-         if ( ( matrix[ ix + N_row * iter ] >> iy ) & ( ( unsigned char )( 1 ) ) ){ found = true; }
+         if ( ( matrix[ ix + (( ucarry_t )( N_row )) * iter ] >> iy ) & ( ( unsigned char )( 1 ) ) ){ found = true; }
          else { iter++; }
       }
       if ( found == true ){
          if ( iter != start ){
             for ( ubase_t row = ix; row < N_row; row++ ){
                // Everything above specific bit has been cleared: bit-wise swapping (also for preceding bits) is OK.
-               unsigned char swap            = matrix[ row + N_row * iter  ];
-               matrix[ row + N_row * iter  ] = matrix[ row + N_row * start ];
-               matrix[ row + N_row * start ] = swap;
+               unsigned char swap                              = matrix[ row + (( ucarry_t )( N_row )) * iter  ];
+               matrix[ row + (( ucarry_t )( N_row )) * iter  ] = matrix[ row + (( ucarry_t )( N_row )) * start ];
+               matrix[ row + (( ucarry_t )( N_row )) * start ] = swap;
             }
          }
          for ( ubase_t vec = iter + 1; vec < d_vec; vec++ ){
-            if ( ( matrix[ ix + N_row * vec ] >> iy ) & ( ( unsigned char )( 1 ) ) ){
+            if ( ( matrix[ ix + (( ucarry_t )( N_row )) * vec ] >> iy ) & ( ( unsigned char )( 1 ) ) ){
                for ( ubase_t row = ix; row < N_row; row++ ){
                   // Everything above specific bit has been cleared: bit-wise XOR (also for preceding bits) is OK.
-                  matrix[ row + N_row * vec ] = ( matrix[ row + N_row * vec ] ) ^ ( matrix[ row + N_row * start ] );
+                  matrix[ row + (( ucarry_t )( N_row )) * vec ] = ( matrix[ row + (( ucarry_t )( N_row )) * vec ] ) ^ ( matrix[ row + (( ucarry_t )( N_row )) * start ] );
                }
             }
          }
@@ -142,7 +142,7 @@ void jans::sieve::__solve_gaussian__( unsigned char * out, ubase_t * vectors, co
       for ( ubase_t row = 0; row < d_lin; row++ ){
          ubase_t       ix = ( d_red + row ) / CHAR_BIT;
          unsigned char iy = ( d_red + row ) % CHAR_BIT;
-         out[ row + d_lin * sol ] = ( ( matrix[ ix + N_row * ( d_vec - d_sol + sol ) ] >> iy ) & ( ( unsigned char )( 1 ) ) );
+         out[ row + d_lin * sol ] = ( ( matrix[ ix + (( ucarry_t )( N_row )) * ( d_vec - d_sol + sol ) ] >> iy ) & ( ( unsigned char )( 1 ) ) );
       }
    }
 
