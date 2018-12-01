@@ -17,6 +17,9 @@
    51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 */
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 #include <assert.h>
 #include <stdio.h>
 #include <iostream>
@@ -32,7 +35,6 @@ jans::sieve::sieve( jans::big_int & num, const ubase_t factorbound, const ubase_
    this->M = sievespace; // Sieve for x in [-M, M]
    target.copy( num );
 
-   __startup1__(); // Sets initial mpqs_q
    __startup2__( factorbound ); // Sets num_primes & creates primes, roots, and logvals
 
    extra    = congruences;
@@ -64,24 +66,39 @@ jans::sieve::~sieve(){
 
 void jans::sieve::run( jans::big_int & sol_p, jans::big_int & sol_q, const double threshold ){
 
-   jans::big_int a;
-   jans::big_int b;
+   jans::big_int shared_mpqs_q;
+   __startup1__( shared_mpqs_q ); // Sets initial mpqs_q near ( 2N )^0.25 / sqrt( M )
 
-   const ubase_t size = 2 * M + 1;
-   double  * sumlog = new double[ size ];
-   ubase_t * shift1 = new ubase_t[ num_primes ];
-   ubase_t * shift2 = new ubase_t[ num_primes ];
+   #pragma omp parallel
+   {
+      jans::big_int a;
+      jans::big_int b;
+      jans::big_int private_mpqs_q;
 
-   while ( lincount < linspace ){
-      __next_mpqs_q__( a, b ); // 0 <= b < a /2
-      __calculate_shifts__( shift1, shift2, a, b );
-      __sieve_sumlog__( size, sumlog, shift1, shift2 );
-      __check_sumlog__( size, sumlog, shift1, threshold, a, b );
+      const ubase_t size = 2 * M + 1;
+      double  * sumlog = new double[ size ];
+      ubase_t * shift1 = new ubase_t[ num_primes ];
+      ubase_t * shift2 = new ubase_t[ num_primes ];
+
+      while ( lincount < linspace ){
+         bool okprime = false;
+         while ( okprime == false ){
+            #pragma omp critical
+            {
+               jans::big_int::minus( shared_mpqs_q, 4 ); // Keep p % 4 == 3  and  p * p <= sqrt(2N)/M
+               private_mpqs_q.copy( shared_mpqs_q );
+            }
+            okprime = __check_mpqs_q__( a, b, private_mpqs_q ); // 0 <= b < a /2
+         }
+         __calculate_shifts__( shift1, shift2, a, b );
+         __sieve_sumlog__( size, sumlog, shift1, shift2 );
+         __check_sumlog__( size, sumlog, shift1, threshold, a, b, private_mpqs_q );
+      }
+
+      delete [] shift1;
+      delete [] shift2;
+      delete [] sumlog;
    }
-
-   delete [] shift1;
-   delete [] shift2;
-   delete [] sumlog;
 
    unsigned char * helper = new unsigned char[ extra * linspace ];
    __solve_gaussian__( helper, powers, powspace, linspace );
@@ -90,86 +107,72 @@ void jans::sieve::run( jans::big_int & sol_p, jans::big_int & sol_q, const doubl
 
 }
 
-void jans::sieve::__next_mpqs_q__( jans::big_int & a, jans::big_int & b ){
+bool jans::sieve::__check_mpqs_q__( jans::big_int & a, jans::big_int & b, jans::big_int & mpqs_q ){
 
-   bool okprime = false;
+   // Check 1: factor base does not divide mpqs_q --> if not probably prime then
+   for ( int ip = 0; ip < num_primes; ip++ ){
+      const ubase_t rem = jans::big_int::div( a, mpqs_q, primes[ ip ] );
+      if ( rem == 0 ){ return false; }
+   }
 
-   while ( okprime == false ){
+   // Check 2: (n/p) == 1
+   const int symbol = __legendre_symbol__( target, mpqs_q );
+   if ( symbol != 1 ){ return false; }
 
-      jans::big_int::minus( mpqs_q, 4 ); // To keep p % 4 == 3  and  p * p <= sqrt(2N)/M
-      okprime = true;
+   // Check 3: Miller Rabin
+   const bool ok_miller_rabin = jans::big_int::miller_rabin( mpqs_q, 12 );
+   if ( ok_miller_rabin == false ){ return false; }
 
-      // Check 1: factor base does not divide mpqs_q --> if not probably prime then
-      for ( int ip = 0; ip < num_primes; ip++ ){
-         const ubase_t rem = jans::big_int::div( a, mpqs_q, primes[ ip ] );
-         if ( rem == 0 ){
-            okprime = false;
-            ip = num_primes;
+   // Check 4: calculate b under assumption mpqs_q prime and check b * b == n ( mod mpqs_q * mpqs_q )
+   {
+      jans::big_int work1;
+      jans::big_int work2;
+      jans::big_int work3;
+      jans::big_int h0;
+      jans::big_int h1;
+      jans::big_int h2;
+
+      // h0 = n ^ ( ( p - 3 ) / 4 ) mod q
+      jans::big_int::diff( work1, mpqs_q, 3 ); // work1 = q - 3
+      ubase_t rem = jans::big_int::div( work2, work1, 4 ); // work2 = ( q - 3 ) / 4
+      jans::big_int::power( h0, target, work2, mpqs_q );
+
+      // h1 = n ^ ( ( p + 1 ) / 4 ) mod q = n * h0 mod q
+      jans::big_int::prodmod( work2, h1, target, h0, mpqs_q );
+
+      // h2 = (2 * h1)^{-1}( ( n - h1^2 ) / q ) mod q
+      jans::big_int::sum( work2, mpqs_q, 1 );                    // work2 = q + 1
+      rem = jans::big_int::div( work3, work2, 2 );               // work3 = ( q + 1 ) / 2 : work3 = 2^{-1} mod q
+      jans::big_int::prodmod( work2, work1, work3, h0, mpqs_q ); // work1 = (2 * h1)^{-1} mod q (h0 is inverse of h1 if q prime)
+      jans::big_int::prod( work2, h1, h1 );
+      jans::big_int::diff( work3, target, work2 );
+      jans::big_int::div( work2, h2, work3, mpqs_q );            // work2 = ( n - h1^2 ) / q
+      if ( jans::big_int::equal( h2, 0 ) == false ){
+         return false;
+      } else {
+         jans::big_int::prodmod( work3, h2, work1, work2, mpqs_q ); // h2 = [ (2 * h1)^{-1} * ( n - h1^2 ) / q ] mod q
+
+         // a = q * q
+         jans::big_int::prod( a, mpqs_q, mpqs_q );
+
+         // b = h1 + q*h2 <= ( q - 1 ) + q * ( q - 1 ) = q * q - 1 < a
+         jans::big_int::prod( work3, h2, mpqs_q );
+         jans::big_int::sum( b, h1, work3 );
+         jans::big_int::diff( work2, a, b );
+         if ( jans::big_int::smaller( work2, b ) ){
+            b.copy( work2 ); // Hence 0 <= b < a/2
          }
-      }
 
-      // Check 2: (n/p) == 1
-      if ( okprime == true ){
-         const int symbol = __legendre_symbol__( target, mpqs_q );
-         if ( symbol != 1 ){
-            okprime = false;
-         }
-      }
-
-      // Check 3: Miller Rabin
-      if ( okprime == true ){
-         okprime = jans::big_int::miller_rabin( mpqs_q, 12 );
-      }
-
-      // Check 4: calculate b under assumption mpqs_q prime and check b * b == n ( mod mpqs_q * mpqs_q )
-      if ( okprime == true ){
-
-         jans::big_int work1;
-         jans::big_int work2;
-         jans::big_int work3;
-         jans::big_int h0;
-         jans::big_int h1;
-         jans::big_int h2;
-
-         // h0 = n ^ ( ( p - 3 ) / 4 ) mod q
-         jans::big_int::diff( work1, mpqs_q, 3 ); // work1 = q - 3
-         ubase_t rem = jans::big_int::div( work2, work1, 4 ); // work2 = ( q - 3 ) / 4
-         jans::big_int::power( h0, target, work2, mpqs_q );
-
-         // h1 = n ^ ( ( p + 1 ) / 4 ) mod q = n * h0 mod q
-         jans::big_int::prodmod( work2, h1, target, h0, mpqs_q );
-
-         // h2 = (2 * h1)^{-1}( ( n - h1^2 ) / q ) mod q
-         jans::big_int::sum( work2, mpqs_q, 1 );                    // work2 = q + 1
-         rem = jans::big_int::div( work3, work2, 2 );               // work3 = ( q + 1 ) / 2 : work3 = 2^{-1} mod q
-         jans::big_int::prodmod( work2, work1, work3, h0, mpqs_q ); // work1 = (2 * h1)^{-1} mod q (h0 is inverse of h1 if q prime)
-         jans::big_int::prod( work2, h1, h1 );
-         jans::big_int::diff( work3, target, work2 );
-         jans::big_int::div( work2, h2, work3, mpqs_q );            // work2 = ( n - h1^2 ) / q
-         if ( jans::big_int::equal( h2, 0 ) == false ){
-            okprime = false;
-         } else {
-            jans::big_int::prodmod( work3, h2, work1, work2, mpqs_q ); // h2 = [ (2 * h1)^{-1} * ( n - h1^2 ) / q ] mod q
-
-            // a = q * q
-            jans::big_int::prod( a, mpqs_q, mpqs_q );
-
-            // b = h1 + q*h2 <= ( q - 1 ) + q * ( q - 1 ) = q * q - 1 < a
-            jans::big_int::prod( work3, h2, mpqs_q );
-            jans::big_int::sum( b, h1, work3 );
-            jans::big_int::diff( work2, a, b );
-            if ( jans::big_int::smaller( work2, b ) ){
-               b.copy( work2 ); // Hence 0 <= b < a/2
-            }
-
-            // check b * b % a == target % a
-            jans::big_int::prod( work1, b, b );
-            jans::big_int::diff( work3, target, work1 );
-            jans::big_int::div( work2, work1, work3, a ); // work2 contains abs_c = (n - b*b)/a, work1 remainder (should be zero)
-            okprime = jans::big_int::equal( work1, 0 );
-         }
+         // check b * b % a == target % a
+         jans::big_int::prod( work1, b, b );
+         jans::big_int::diff( work3, target, work1 );
+         jans::big_int::div( work2, work1, work3, a ); // work2 contains abs_c = (n - b*b)/a, work1 remainder (should be zero)
+         const bool ok_work1_zero = jans::big_int::equal( work1, 0 );
+         return ok_work1_zero;
       }
    }
+
+   return false;
 
 }
 
@@ -260,7 +263,7 @@ void jans::sieve::__factor__( unsigned char * helper, jans::big_int & p, jans::b
 
 }
 
-void jans::sieve::__check_sumlog__( const ubase_t size, double * sumlog, ubase_t * helper, const double threshold, jans::big_int & a, jans::big_int & b ){
+void jans::sieve::__check_sumlog__( const ubase_t size, double * sumlog, ubase_t * helper, const double threshold, jans::big_int & a, jans::big_int & b, jans::big_int & mpqs_q ){
 
    // 0 <= b < a/2
    // ( a * x + 2 * b ) * x is non-negative ( check with x in [-M, -1] and [0, M] resp. )
@@ -302,22 +305,34 @@ void jans::sieve::__check_sumlog__( const ubase_t size, double * sumlog, ubase_t
             jans::big_int::prod( work1, a, abs_x );
             if ( cnt < M ){ jans::big_int::diff( work1, work1, b ); }
                      else { jans::big_int::sum(  work1, work1, b ); }
-            xvalues[ lincount ].copy( work1 );
-            pvalues[ lincount ].copy( mpqs_q );
-            powers[ lincount * powspace + 0 ] = ( ( negative ) ? 1 : 0 );
-            for ( int ip = 0; ip < num_primes; ip++ ){
-               powers[ lincount * powspace + 1 + ip ] = helper[ ip ];
+            #pragma omp critical
+            {
+               if ( lincount < linspace ){
+                  xvalues[ lincount ].copy( work1 );
+                  pvalues[ lincount ].copy( mpqs_q );
+                  powers[ lincount * powspace + 0 ] = ( ( negative ) ? 1 : 0 );
+                  for ( int ip = 0; ip < num_primes; ip++ ){
+                     powers[ lincount * powspace + 1 + ip ] = helper[ ip ];
+                  }
+                  lincount++;
+               }
             }
-            lincount++;
          }
       }
       cnt++;
    }
 
-   std::cout << "For q = " << mpqs_q.write( 10 ) << ", sieving retains " << cnt_sumlog << " / " << cnt
-                                       << " and trial division retains " << cnt_smooth << " / " << cnt_sumlog << "." << std::endl;
-   std::cout << "Obtained / required B-smooth numbers = " << lincount << " / " << linspace << "." << std::endl;
-
+   #pragma omp critical
+   {
+      std::cout << "For q = " << mpqs_q.write( 10 ) << ", sieving retains " << cnt_sumlog << " / " << cnt
+                                          << " and trial division retains " << cnt_smooth << " / " << cnt_sumlog << "." << std::endl;
+      #ifdef _OPENMP
+      if ( omp_get_thread_num() == 0 )
+      #endif
+      {
+         std::cout << "Obtained / required B-smooth numbers = " << lincount << " / " << linspace << "." << std::endl;
+      }
+   }
 }
 
 void jans::sieve::__sieve_sumlog__( const ubase_t size, double * sumlog, ubase_t * shift1, ubase_t * shift2 ) const{

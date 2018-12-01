@@ -22,7 +22,7 @@
 
 #include "sieve.h"
 
-void jans::sieve::__startup1__(){
+void jans::sieve::__startup1__( jans::big_int & mpqs_q ){
 
    jans::big_int work;
    ubase_t rem;

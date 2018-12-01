@@ -42,8 +42,6 @@ namespace jans{
 
          jans::big_int target; // N
 
-         jans::big_int mpqs_q; // number near ( 2N )^0.25 / sqrt( M )
-
          // Factor base information
 
          int num_primes;
@@ -90,17 +88,17 @@ namespace jans{
 
          // The core routines, in order
 
-         void __startup1__();
+         void __startup1__( jans::big_int & mpqs_q );
 
          void __startup2__( const ubase_t bound );
 
-         void __next_mpqs_q__( jans::big_int & a, jans::big_int & b );
+         bool __check_mpqs_q__( jans::big_int & a, jans::big_int & b, jans::big_int & mpqs_q );
 
          void __calculate_shifts__( ubase_t * shift1, ubase_t * shift2, jans::big_int & a, jans::big_int & b );
 
          void __sieve_sumlog__( const ubase_t size, double * sumlog, ubase_t * shift1, ubase_t * shift2 ) const;
 
-         void __check_sumlog__( const ubase_t size, double * sumlog, ubase_t * helper, const double threshold, jans::big_int & a, jans::big_int & b );
+         void __check_sumlog__( const ubase_t size, double * sumlog, ubase_t * helper, const double threshold, jans::big_int & a, jans::big_int & b, jans::big_int & mpsqs_q );
 
          static void __solve_gaussian__( unsigned char * out, ubase_t * vectors, const ubase_t d_pow, const ubase_t d_lin );
 
