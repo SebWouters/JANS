@@ -124,7 +124,7 @@ int main( int argc, char ** argv ){
             return 0;
             break;
          case 'v':
-            std::cout << "jans version 0.2.0" << std::endl;
+            std::cout << "jans version 0.3.0" << std::endl;
             return 0;
             break;
          case 'N':
