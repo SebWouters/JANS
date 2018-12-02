@@ -21,6 +21,7 @@
 #include <omp.h>
 #endif
 #include <assert.h>
+#include <sys/time.h>
 #include <stdio.h>
 #include <iostream>
 #include <math.h>
@@ -69,6 +70,9 @@ void jans::sieve::run( jans::big_int & sol_p, jans::big_int & sol_q, const doubl
    jans::big_int shared_mpqs_q;
    __startup1__( shared_mpqs_q ); // Sets initial mpqs_q near ( 2N )^0.25 / sqrt( M )
 
+   struct timeval start, end;
+   gettimeofday( &start, NULL );
+
    #pragma omp parallel
    {
       jans::big_int a;
@@ -100,9 +104,21 @@ void jans::sieve::run( jans::big_int & sol_p, jans::big_int & sol_q, const doubl
       delete [] sumlog;
    }
 
+   gettimeofday( &end, NULL );
+   double elapsed = ( end.tv_sec - start.tv_sec ) + 1e-6 * ( end.tv_usec - start.tv_usec );
+   std::cout << "Time elapsed for sieving (seconds): " << elapsed << std::endl;
+
    unsigned char * helper = new unsigned char[ extra * (( ucarry_t )( linspace )) ];
+   gettimeofday( &start, NULL );
    __solve_gaussian__( helper, powers, powspace, linspace );
+   gettimeofday( &end, NULL );
+   elapsed = ( end.tv_sec - start.tv_sec ) + 1e-6 * ( end.tv_usec - start.tv_usec );
+   std::cout << "Time elapsed for Gaussian elimination (seconds): " << elapsed << std::endl;
+   gettimeofday( &start, NULL );
    __factor__( helper, sol_p, sol_q );
+   gettimeofday( &end, NULL );
+   elapsed = ( end.tv_sec - start.tv_sec ) + 1e-6 * ( end.tv_usec - start.tv_usec );
+   std::cout << "Time elapsed for constructing the solution (seconds): " << elapsed << std::endl;
    delete [] helper;
 
 }
