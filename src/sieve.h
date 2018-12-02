@@ -66,7 +66,7 @@ namespace jans{
 
          jans::big_int * pvalues;
 
-         ubase_t * powers;
+         ubase_t ** powers;
 
          // Helper funcionality
 
@@ -100,7 +100,7 @@ namespace jans{
 
          void __check_sumlog__( const ubase_t size, double * sumlog, ubase_t * helper, const double threshold, jans::big_int & a, jans::big_int & b, jans::big_int & mpsqs_q );
 
-         static void __solve_gaussian__( unsigned char * out, ubase_t * vectors, const ubase_t d_pow, const ubase_t d_lin );
+         static void __solve_gaussian__( unsigned char * out, ubase_t ** vectors, const ubase_t d_pow, const ubase_t d_lin );
 
          void __factor__( unsigned char * helper, jans::big_int & p, jans::big_int & q );
 

@@ -41,15 +41,11 @@ jans::sieve::sieve( jans::big_int & num, const ubase_t factorbound, const ubase_
    powspace = num_primes + 1; // Positive and negative Q(x)
    linspace = powspace + extra;
 
-   // Don't create overflows
-   const ucarry_t size_powers = ( (( ucarry_t )( linspace )) * (( ucarry_t )( powspace )) );
-   assert( size_powers <= LLONG_MAX );
-
    lincount = 0;
    xvalues  = new jans::big_int[ linspace ];
    pvalues  = new jans::big_int[ linspace ];
-   powers   = new ubase_t[ size_powers ];
-   for ( ucarry_t cnt = 0; cnt < size_powers; cnt++ ){ powers[ cnt ] = 0; }
+   powers   = new    ubase_t * [ linspace ];
+   for ( int cnt = 0; cnt < linspace; cnt++ ){ powers[ cnt ] = NULL; }
 
 }
 
@@ -61,6 +57,9 @@ jans::sieve::~sieve(){
 
    delete [] xvalues;
    delete [] pvalues;
+   for ( int cnt = 0; cnt < linspace; cnt++ ){
+      if ( powers[ cnt ] != NULL ){ delete [] powers[ cnt ]; }
+   }
    delete [] powers;
 
 }
@@ -101,9 +100,7 @@ void jans::sieve::run( jans::big_int & sol_p, jans::big_int & sol_q, const doubl
       delete [] sumlog;
    }
 
-   const ucarry_t size_helper = extra * (( ucarry_t )( linspace ));
-   assert( size_helper <= INT_MAX );
-   unsigned char * helper = new unsigned char[ size_helper ];
+   unsigned char * helper = new unsigned char[ extra * (( ucarry_t )( linspace )) ];
    __solve_gaussian__( helper, powers, powspace, linspace );
    __factor__( helper, sol_p, sol_q );
    delete [] helper;
@@ -210,7 +207,14 @@ void jans::sieve::__factor__( unsigned char * helper, jans::big_int & p, jans::b
       for ( int ip = 0; ip < num_primes; ip++ ){
          ubase_t pow = 0;
          for ( int vec = 0; vec < linspace; vec++ ){
-            if ( helper[ vec + linspace * sol ] == 1 ){ pow += powers[ 1 + ip + (( ucarry_t )( powspace )) * vec ]; }
+            if ( helper[ vec + (( ucarry_t )( linspace )) * sol ] == 1 ){
+               const ubase_t numnonzero = powers[ vec ][ 0 ];
+               for ( ubase_t nonzero = 0; nonzero < numnonzero; nonzero++ ){
+                  if ( powers[ vec ][ 2 + 2 * nonzero ] == ip ){
+                     pow += powers[ vec ][ 3 + 2 * nonzero ];
+                  }
+               }
+            }
          }
          assert( pow % 2 == 0 );
          pow = pow / 2;
@@ -221,7 +225,7 @@ void jans::sieve::__factor__( unsigned char * helper, jans::big_int & p, jans::b
          jans::big_int::div( work2, y, work1, target ); // y *= work3 % N
       }
       for ( int vec = 0; vec < linspace; vec++ ){
-         if ( helper[ vec + linspace * sol ] == 1 ){
+         if ( helper[ vec + (( ucarry_t )( linspace )) * sol ] == 1 ){
             jans::big_int::prod( work1, y, pvalues[ vec ] );
             jans::big_int::div( work2, y, work1, target ); // y *= p(a,vec) % N
          }
@@ -230,7 +234,7 @@ void jans::sieve::__factor__( unsigned char * helper, jans::big_int & p, jans::b
       x.copy( 1 );
 
       for ( int vec = 0; vec < linspace; vec++ ){
-         if ( helper[ vec + linspace * sol ] == 1 ){
+         if ( helper[ vec + (( ucarry_t )( linspace )) * sol ] == 1 ){
             jans::big_int::prod( work1, x, xvalues[ vec ] );
             jans::big_int::div( work2, x, work1, target );
          }
@@ -308,17 +312,36 @@ void jans::sieve::__check_sumlog__( const ubase_t size, double * sumlog, ubase_t
             jans::big_int::prod( work1, a, abs_x );
             if ( cnt < M ){ jans::big_int::diff( work1, work1, b ); }
                      else { jans::big_int::sum(  work1, work1, b ); }
+
+            ubase_t numnonzero = 0;
+            for ( int ip = 0; ip < num_primes; ip++ ){
+               if ( helper[ ip ] != 0 ){ numnonzero++; }
+            }
+            int ptr = -1;
+
             #pragma omp critical
             {
                if ( lincount < linspace ){
-                  xvalues[ lincount ].copy( work1 );
-                  pvalues[ lincount ].copy( mpqs_q );
-                  powers[ lincount * (( ucarry_t )( powspace )) + 0 ] = ( ( negative ) ? 1 : 0 );
-                  for ( int ip = 0; ip < num_primes; ip++ ){
-                     powers[ lincount * (( ucarry_t )( powspace )) + 1 + ip ] = helper[ ip ];
-                  }
+                  ptr = lincount;
+                  xvalues[ ptr ].copy( work1 );
+                  pvalues[ ptr ].copy( mpqs_q );
+                   powers[ ptr ] = new ubase_t[ 2 + 2 * numnonzero ];
                   lincount++;
                }
+            }
+
+            if ( ptr != -1 ){
+               powers[ ptr ][ 0 ] = numnonzero;
+               powers[ ptr ][ 1 ] = ( ( negative ) ? 1 : 0 );
+               ubase_t doublecheck = 0;
+               for ( int ip = 0; ip < num_primes; ip++ ){
+                  if ( helper[ ip ] != 0 ){
+                     powers[ ptr ][ 2 + 2 * doublecheck ] = ip;
+                     powers[ ptr ][ 3 + 2 * doublecheck ] = helper[ ip ];
+                     doublecheck++;
+                  }
+               }
+               assert( numnonzero == doublecheck );
             }
          }
       }

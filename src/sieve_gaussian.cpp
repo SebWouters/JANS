@@ -22,7 +22,7 @@
 
 #include "sieve.h"
 
-void jans::sieve::__solve_gaussian__( unsigned char * out, ubase_t * vectors, const ubase_t d_pow, const ubase_t d_lin ){
+void jans::sieve::__solve_gaussian__( unsigned char * out, ubase_t ** vectors, const ubase_t d_pow, const ubase_t d_lin ){
 
    unsigned char * lin_contributes = new unsigned char[ d_lin ];
    unsigned char * pow_contributes = new unsigned char[ d_pow ];
@@ -30,14 +30,23 @@ void jans::sieve::__solve_gaussian__( unsigned char * out, ubase_t * vectors, co
    for ( ubase_t pow = 0; pow < d_pow; pow++ ){ pow_contributes[ pow ] = 1; }
 
    ubase_t vecspace = d_lin;
-   for ( ubase_t pow = 0; pow < d_pow; pow++ ){
+   const int num_primes = d_pow - 1;
+   for ( int ip = 0; ip < num_primes; ip++ ){
       ubase_t num_odds = 0;
       ubase_t last = d_lin;
       for ( ubase_t lin = 0; lin < d_lin; lin++ ){
-         if ( ( vectors[ pow + (( ucarry_t )( d_pow )) * lin ] % 2 ) == 1 ){
-            num_odds++;
-            last = lin;
-            if ( num_odds == 2 ){ lin = d_lin; }
+         const ubase_t numnonzero = vectors[ lin ][ 0 ];
+         for ( ubase_t nonzero = 0; nonzero < numnonzero; nonzero++ ){
+            if ( vectors[ lin ][ 2 + 2 * nonzero ] == ip ){
+               if ( ( ( vectors[ lin ][ 3 + 2 * nonzero ] ) % 2 ) == 1 ){
+                  num_odds++;
+                  last = lin;
+                  if ( num_odds == 2 ){
+                     lin = d_lin;
+                     nonzero = numnonzero;
+                  }
+               }
+            }
          }
       }
       if ( num_odds == 1 ){
@@ -49,20 +58,26 @@ void jans::sieve::__solve_gaussian__( unsigned char * out, ubase_t * vectors, co
    std::cout << "Gaussian elimination: Removed " << d_lin - vecspace << " of the " << d_lin << " vectors with a unique odd prime power." << std::endl;
 
    ubase_t redspace = d_pow;
-   for ( ubase_t pow = 0; pow < d_pow; pow++ ){
+   for ( int ip = 0; ip < num_primes; ip++ ){
       ubase_t num_odds = 0;
       ubase_t lin = 0;
       for ( ubase_t vec = 0; vec < vecspace; vec++ ){
          while ( lin_contributes[ lin ] == 0 ){ lin++; }
-         if ( ( vectors[ pow + (( ucarry_t )( d_pow )) * lin ] % 2 ) == 1 ){
-            num_odds++;
-            vec = vecspace;
+         const ubase_t numnonzero = vectors[ lin ][ 0 ];
+         for ( ubase_t nonzero = 0; nonzero < numnonzero; nonzero++ ){
+            if ( vectors[ lin ][ 2 + 2 * nonzero ] == ip ){
+               if ( ( ( vectors[ lin ][ 3 + 2 * nonzero ] ) % 2 ) == 1 ){
+                  num_odds++;
+                  vec = vecspace;
+                  nonzero = numnonzero;
+               }
+            }
          }
          lin++;
       }
       if ( num_odds == 0 ){
          redspace--;
-         pow_contributes[ pow ] = 0;
+         pow_contributes[ 1 + ip ] = 0;
       }
    }
 
@@ -92,10 +107,22 @@ void jans::sieve::__solve_gaussian__( unsigned char * out, ubase_t * vectors, co
       ubase_t lin = 0;
       for ( ubase_t vec = 0; vec < d_vec; vec++ ){
          while ( lin_contributes[ lin ] == 0 ){ lin++; }
-         ubase_t pow = 0;
-         for ( ubase_t red = 0; red < d_red; red++ ){
+
+         const ubase_t numnonzero     = vectors[ lin ][ 0 ];
+         const unsigned char negative = vectors[ lin ][ 1 ];
+         matrix[ 0 + (( ucarry_t )( N_row )) * vec ] |= negative;
+
+         ubase_t pow = 1;
+         for ( ubase_t red = 1; red < d_red; red++ ){
             while ( pow_contributes[ pow ] == 0 ){ pow++; }
-            matrix[ ( red / CHAR_BIT ) + (( ucarry_t )( N_row )) * vec ] |= ( ( ( unsigned char )( vectors[ pow + (( ucarry_t )( d_pow )) * lin ] % 2 ) ) << ( red % CHAR_BIT ) );
+            for ( ubase_t nonzero = 0; nonzero < numnonzero; nonzero++ ){
+               if ( vectors[ lin ][ 2 + 2 * nonzero ] == ( pow - 1 ) ){
+                  const unsigned char value_to_set = ( vectors[ lin ][ 3 + 2 * nonzero ] ) % 2;
+                  if ( value_to_set == 1 ){
+                     matrix[ ( red / CHAR_BIT ) + (( ucarry_t )( N_row )) * vec ] |= ( value_to_set << ( red % CHAR_BIT ) );
+                  }
+               }
+            }
             pow++;
          }
          matrix[ ( ( d_red + lin ) / CHAR_BIT ) + (( ucarry_t )( N_row )) * vec ] |= ( ( ( unsigned char )( 1 ) ) << ( ( d_red + lin ) % CHAR_BIT ) );
@@ -142,7 +169,7 @@ void jans::sieve::__solve_gaussian__( unsigned char * out, ubase_t * vectors, co
       for ( ubase_t row = 0; row < d_lin; row++ ){
          ubase_t       ix = ( d_red + row ) / CHAR_BIT;
          unsigned char iy = ( d_red + row ) % CHAR_BIT;
-         out[ row + d_lin * sol ] = ( ( matrix[ ix + (( ucarry_t )( N_row )) * ( d_vec - d_sol + sol ) ] >> iy ) & ( ( unsigned char )( 1 ) ) );
+         out[ row + (( ucarry_t )( d_lin )) * sol ] = ( ( matrix[ ix + (( ucarry_t )( N_row )) * ( d_vec - d_sol + sol ) ] >> iy ) & ( ( unsigned char )( 1 ) ) );
       }
    }
 
