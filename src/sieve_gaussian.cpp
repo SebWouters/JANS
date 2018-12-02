@@ -153,6 +153,7 @@ void jans::sieve::__solve_gaussian__( unsigned char * out, ubase_t ** vectors, c
                matrix[ row + (( ucarry_t )( N_row )) * start ] = swap;
             }
          }
+         #pragma omp parallel for schedule(static)
          for ( ubase_t vec = iter + 1; vec < d_vec; vec++ ){
             if ( ( matrix[ ix + (( ucarry_t )( N_row )) * vec ] >> iy ) & ( ( unsigned char )( 1 ) ) ){
                for ( ubase_t row = ix; row < N_row; row++ ){
