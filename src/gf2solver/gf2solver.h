@@ -38,6 +38,16 @@ namespace jans {
         std::vector<uint32_t>   space_contributions(const std::vector<sparse_vector>& space, const uint32_t basis_size);
         std::vector<uint32_t>   basis_contributions(const std::vector<sparse_vector>& space, const uint32_t basis_size);
         std::vector<std::vector<uint32_t>> gaussian(const std::vector<sparse_vector>& space, const uint32_t basis_size);
+
+        std::vector<uint8_t> random(const uint32_t size);
+        std::vector<uint8_t> zeroes(const uint32_t size);
+        uint8_t dotproduct(const std::vector<uint8_t>& first, const std::vector<uint8_t>& second);
+        bool update_x(std::vector<uint8_t>& x, const std::vector<uint8_t>& v, const std::vector<uint8_t>& Av, const std::vector<uint8_t>& b);
+
+        std::vector<uint8_t> first_half(const std::vector<sparse_vector>& space, const std::vector<uint8_t>& input, const uint32_t basis_size);
+        std::vector<uint8_t> second_half(const std::vector<sparse_vector>& space, const std::vector<uint8_t>& intermediate, const uint32_t basis_size);
+
+        std::vector<uint8_t> matvec(const std::vector<sparse_vector>& space, const std::vector<uint8_t>& input, const uint32_t basis_size);
     }
 }
 
