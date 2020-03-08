@@ -21,6 +21,8 @@
 #define JANS_SIEVE
 
 #include "big_int.h"
+#include "solver/solver.h"
+#include <vector>
 
 namespace jans{
 
@@ -58,15 +60,17 @@ namespace jans{
 
          int powspace; // num_primes + 1 ( to account for sign Q(x) )
 
-         int linspace; // powspace + extra_sz
+         int required; // powspace + extra_sz
 
-         int lincount;
+         //int lincount;
 
-         jans::big_int * xvalues;
+         //jans::big_int * xvalues;
 
-         jans::big_int * pvalues;
+         //jans::big_int * pvalues;
 
-         ubase_t ** powers;
+         //ubase_t ** powers;
+
+         std::vector<smooth_number> factorization;
 
          // Helper funcionality
 
@@ -100,9 +104,7 @@ namespace jans{
 
          void __check_sumlog__( const ubase_t size, double * sumlog, ubase_t * helper, const double threshold, jans::big_int & a, jans::big_int & b, jans::big_int & mpsqs_q );
 
-         static void __solve_gaussian__( unsigned char * out, ubase_t ** vectors, const ubase_t d_pow, const ubase_t d_lin );
-
-         void __factor__( unsigned char * helper, jans::big_int & p, jans::big_int & q );
+         void __factor__(const std::vector<std::vector<uint32_t>>& nullspace, jans::big_int & p, jans::big_int & q);
 
    };
 

@@ -42,7 +42,15 @@ jans::big_int::~big_int(){
 
 }
 
-void jans::big_int::copy( big_int & tocopy ){
+jans::big_int::big_int(const big_int& tocopy)
+{
+    assert(nb_set);
+    lead = tocopy.lead;
+    data = new ubase_t[ NUM_BLOCK ];
+    __copy__(data, tocopy.data);
+}
+
+void jans::big_int::copy(const big_int& tocopy){
 
    lead = tocopy.lead;
    __copy__( data, tocopy.data );

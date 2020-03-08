@@ -39,9 +39,11 @@ namespace jans{
 
          big_int();
 
+         big_int(const big_int & tocopy);
+
          virtual ~big_int();
 
-         void copy( big_int & tocopy );
+         void copy(const big_int & tocopy);
 
          void copy( const ubase_t value );
 
