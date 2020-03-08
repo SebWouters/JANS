@@ -11,7 +11,7 @@ g++ -g\
     src/sieve.cpp\
     src/sieve_startup.cpp\
     src/sieve_numtheo.cpp\
-    src/solver/clean.cpp\
-    src/solver/power_contributions.cpp\
-    src/solver/gaussian.cpp -o jans
+    src/gf2solver/space_contributions.cpp\
+    src/gf2solver/basis_contributions.cpp\
+    src/gf2solver/gaussian.cpp -o jans
 

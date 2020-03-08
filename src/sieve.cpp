@@ -108,10 +108,14 @@ void jans::sieve::run( jans::big_int & sol_p, jans::big_int & sol_q, const doubl
    double elapsed = ( end.tv_sec - start.tv_sec ) + 1e-6 * ( end.tv_usec - start.tv_usec );
    std::cout << "Time elapsed for sieving (seconds): " << elapsed << std::endl;
 
-   extra = factorization.size() - powspace;
-   factorization = jans::solver::clean(factorization, num_primes);
+    std::vector<std::vector<uint32_t>> space = __gf2sparse__(factorization);
+    std::vector<uint32_t> relevant = jans::gf2solver::space_contributions(space, 1U + num_primes);
+    //std::cout << "jans::gf2solver::space_contributions: Removed " << space.size() - relevant.size() << " of the " << space.size() << " vectors with a unique odd prime power." << std::endl;
+    factorization = __gf2prune__(factorization, relevant);
+    space = __gf2sparse__(factorization);
+
    gettimeofday( &start, NULL );
-   std::vector<std::vector<uint32_t>> nullspace = jans::solver::gaussian(factorization, num_primes);
+   std::vector<std::vector<uint32_t>> nullspace = jans::gf2solver::gaussian(space, 1U + num_primes);
    gettimeofday( &end, NULL );
    elapsed = ( end.tv_sec - start.tv_sec ) + 1e-6 * ( end.tv_usec - start.tv_usec );
    std::cout << "Time elapsed for Gaussian elimination (seconds): " << elapsed << std::endl;
@@ -121,6 +125,42 @@ void jans::sieve::run( jans::big_int & sol_p, jans::big_int & sol_q, const doubl
    elapsed = ( end.tv_sec - start.tv_sec ) + 1e-6 * ( end.tv_usec - start.tv_usec );
    std::cout << "Time elapsed for constructing the solution (seconds): " << elapsed << std::endl;
 
+}
+
+std::vector<std::vector<uint32_t>> jans::__gf2sparse__(const std::vector<jans::smooth_number>& list)
+{
+    std::vector<std::vector<uint32_t>> result;
+
+    for (const smooth_number& sn : list)
+    {
+        std::vector<uint32_t> sparse;
+        sparse.reserve(1U + sn.factors.size());
+        if (sn.negative)
+        {
+            sparse.push_back(0U);
+        }
+        for (const prime_factor& pf : sn.factors)
+        {
+            if (pf.power & 1U)
+            {
+                sparse.push_back(pf.index + 1U);
+            }
+        }
+        result.push_back(sparse);
+    }
+
+    return result;
+}
+
+std::vector<jans::smooth_number> jans::__gf2prune__(const std::vector<jans::smooth_number>& list, const std::vector<uint32_t>& relevant)
+{
+    std::vector<smooth_number> result;
+    result.reserve(relevant.size());
+    for (uint32_t item : relevant)
+    {
+        result.push_back(list[item]);
+    }
+    return result;
 }
 
 bool jans::sieve::__check_mpqs_q__( jans::big_int & a, jans::big_int & b, jans::big_int & mpqs_q ){
@@ -208,18 +248,14 @@ void jans::sieve::__calculate_shifts__( ubase_t * shift1, ubase_t * shift2, jans
 
 void jans::sieve::__factor__(const std::vector<std::vector<uint32_t>>& nullspace, jans::big_int & p, jans::big_int & q)
 {
-
-   int sol = 0;
-
-   jans::big_int x;
-   jans::big_int y;
-   jans::big_int work1;
-   jans::big_int work2;
-   jans::big_int work3;
+    jans::big_int x;
+    jans::big_int y;
+    jans::big_int work1;
+    jans::big_int work2;
+    jans::big_int work3;
 
     for (const std::vector<uint32_t>& nullvector : nullspace)
     {
-
         y.copy( 1 );
 
         for (ubase_t ip = 0; ip < num_primes; ++ip){
@@ -230,8 +266,7 @@ void jans::sieve::__factor__(const std::vector<std::vector<uint32_t>>& nullspace
                 for (const prime_factor& pf : factorization[item].factors)
                 {
                     if (pf.index == ip){
-                        pow += pf.power;
-std::cout << "Power = " << pf.power << std::endl;
+                        pow += pf.power; // Some are other than one --> how to retrieve from x and p ?
                     }
                 }
             }
@@ -255,34 +290,30 @@ std::cout << "Power = " << pf.power << std::endl;
             jans::big_int::div( work2, x, work1, target );
         }
 
-      jans::big_int::diff( work2, target, y ); // work2 = -y mod N = N - y
-      if ( ( jans::big_int::equal( x, y ) == false ) && ( jans::big_int::equal( x, work2 ) == false ) ){
+        jans::big_int::diff( work2, target, y ); // work2 = -y mod N = N - y
+        if ( ( jans::big_int::equal( x, y ) == false ) && ( jans::big_int::equal( x, work2 ) == false ) )
+        {
+            if ( jans::big_int::smaller( x, y ) )
+            {
+                jans::big_int::diff( work1, y, x );
+                jans::big_int::gcd( work2, work1, target );
+            } else {
+                jans::big_int::diff( work1, x, y );
+                jans::big_int::gcd( work2, work1, target );
+            }
 
-         if ( jans::big_int::smaller( x, y ) ){
-            jans::big_int::diff( work1, y, x );
-            jans::big_int::gcd( work2, work1, target );
-         } else {
-            jans::big_int::diff( work1, x, y );
-            jans::big_int::gcd( work2, work1, target );
-         }
+            jans::big_int::div( work1, x, target, work2 );
+            assert( jans::big_int::equal( x, 0 ) ); // Remainder zero
 
-         jans::big_int::div( work1, x, target, work2 );
-         assert( jans::big_int::equal( x, 0 ) ); // Remainder zero
-
-         if ( ! ( jans::big_int::equal( work1, 1 ) || ( jans::big_int::equal( work2, 1 ) ) ) ){
-
-            p.copy( work2 );
-            q.copy( work1 );
-            return;
-
-         }
-      }
-
-      sol++;
-   }
-
-   std::cerr << "   Error: Increase -Z, --congruences" << std::endl;
-
+            if ( ! ( jans::big_int::equal( work1, 1 ) || ( jans::big_int::equal( work2, 1 ) ) ) )
+            {
+                p.copy( work2 );
+                q.copy( work1 );
+                return;
+            }
+        }
+    }
+    std::cerr << "   Error: Increase -Z, --congruences" << std::endl;
 }
 
 inline jans::smooth_number __pack_smooth_number__(const bool negative, const jans::big_int& xval, const jans::big_int& pval, ubase_t * powers, const ubase_t num_primes)
@@ -351,7 +382,7 @@ void jans::sieve::__check_sumlog__( const ubase_t size, double * sumlog, ubase_t
       const double reference = log( jans::big_int::i2f( work2 ) ) - threshold;
       if ( sumlog[ cnt ] > reference ){
          cnt_sumlog++;
-         const bool smooth = __extract__( work2, helper );
+         const bool smooth = __extract__( work2, helper ); // Kills work2
          if ( smooth ){
             cnt_smooth++;
             jans::big_int::prod( work1, a, abs_x );
@@ -363,39 +394,6 @@ void jans::sieve::__check_sumlog__( const ubase_t size, double * sumlog, ubase_t
             {
                 factorization.push_back(result);
             }
-
-            //ubase_t numnonzero = 0;
-            //for ( int ip = 0; ip < num_primes; ip++ ){
-            //   if ( helper[ ip ] != 0 ){ numnonzero++; }
-            //}
-            //int ptr = -1;
-
-
-
-            //#pragma omp critical
-            //{
-            //   if ( lincount < linspace ){
-            //      ptr = lincount;
-            //      //xvalues[ ptr ].copy( work1 );
-            //      //pvalues[ ptr ].copy( mpqs_q );
-            //      // powers[ ptr ] = new ubase_t[ 2 + 2 * numnonzero ];
-            //      //lincount++;
-            //   }
-            //}
-
-            //if ( ptr != -1 ){
-               //powers[ ptr ][ 0 ] = numnonzero;
-               //powers[ ptr ][ 1 ] = ( ( negative ) ? 1 : 0 );
-               //ubase_t doublecheck = 0;
-               //for ( int ip = 0; ip < num_primes; ip++ ){
-               //   if ( helper[ ip ] != 0 ){
-               //      powers[ ptr ][ 2 + 2 * doublecheck ] = ip;
-               //      powers[ ptr ][ 3 + 2 * doublecheck ] = helper[ ip ];
-               //      doublecheck++;
-               //   }
-               //}
-               //assert( numnonzero == doublecheck );
-            //}
          }
       }
       cnt++;

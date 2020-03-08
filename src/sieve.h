@@ -21,10 +21,28 @@
 #define JANS_SIEVE
 
 #include "big_int.h"
-#include "solver/solver.h"
+#include "gf2solver/gf2solver.h"
 #include <vector>
 
 namespace jans{
+
+    typedef struct
+    {
+        uint32_t index; // of the prime
+        uint32_t power; // of the prime: idea: only retain if power==1?
+    } prime_factor;
+
+    typedef struct
+    {
+        jans::big_int xval; // Best to pull out?
+        jans::big_int pval;
+        std::vector<prime_factor> factors;
+        bool negative;
+    } smooth_number;
+
+    static std::vector<std::vector<uint32_t>> __gf2sparse__(const std::vector<smooth_number>& list);
+
+    static std::vector<smooth_number> __gf2prune__(const std::vector<smooth_number>& list, const std::vector<uint32_t>& relevant);
 
    class sieve{
 

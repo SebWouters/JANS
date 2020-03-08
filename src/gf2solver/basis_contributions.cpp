@@ -19,41 +19,30 @@
 
 #include <stdio.h>
 #include <iostream>
+#include <algorithm>
 
-#include "solver.h"
+#include "gf2solver.h"
 
 /*
-    Return an std::vector with the prime indices which can contribute
+    Returns the basis_indices (0 <= basis_index < basis_size) which can contribute to the nullspace of space
 */
-std::vector<uint32_t> jans::solver::power_contributions(const std::vector<smooth_number>& list, const uint32_t num_primes)
+std::vector<uint32_t> jans::gf2solver::basis_contributions(const std::vector<sparse_vector>& space, const uint32_t basis_size)
 {
     std::vector<uint32_t> contributions;
-    contributions.reserve(num_primes);
+    contributions.reserve(basis_size);
 
-    for (uint32_t ip = 0U; ip < num_primes; ++ip)
+    for (uint32_t basis_idx = 0U; basis_idx < basis_size; ++basis_idx)
     {
-        uint8_t num_odds = 0U;
-        for (const smooth_number& sn : list){
-            for (const prime_factor& pf : sn.factors)
+        for (const sparse_vector& vec : space){
+            if (std::find(vec.begin(), vec.end(), basis_idx) != vec.end())
             {
-                if ((pf.index == ip) && ((pf.power & 1U) == 1U))
-                {
-                    ++num_odds;
-                    break;
-                }
-            }
-            if (num_odds >= 1U)
-            {
+                contributions.push_back(basis_idx);
                 break;
             }
         }
-        if (num_odds >= 1U)
-        {
-            contributions.push_back(ip);
-        }
     }
 
-    std::cout << "jans::solver::power_contributions: Removed " << num_primes - contributions.size() << " of the " << num_primes << " primes with only even powers." << std::endl;
+    std::cout << "jans::solver::basis_contributions: " << basis_size - contributions.size() << " of the " << basis_size << " basis indices cannot contribute to the nullspace." << std::endl;
 
     return contributions;
 }

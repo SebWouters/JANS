@@ -19,33 +19,25 @@
 
 #pragma once
 
-#include "../big_int.h"
 #include <vector>
 
 namespace jans {
 
-    typedef struct
+    /*
+        Solver for a vector space GF(2) x GF(2) x GF(2) x ... x GF(2):
+          - full_vector is never represented
+          - basis_size  is the length of a full_vector
+          - basis_index is an index vis-a-vis a full_vector (0 <= basis_index < basis_size)
+     */
+
+    // A sparse_vector contains all basis_index for which full_vector[basis_index] == 1
+    using sparse_vector = std::vector<uint32_t>;
+
+    namespace gf2solver
     {
-        uint32_t index; // of the prime
-        uint32_t power; // of the prime: idea: only retain if power==1?
-    } prime_factor;
-
-    typedef struct
-    {
-        jans::big_int xval; // Best to pull out?
-        jans::big_int pval;
-        std::vector<prime_factor> factors;
-        bool negative;
-    } smooth_number;
-
-    namespace solver {
-
-         std::vector<smooth_number> clean(const std::vector<smooth_number>& list, const uint32_t num_primes);
-
-         std::vector<uint32_t> power_contributions(const std::vector<smooth_number>& list, const uint32_t num_primes);
-
-         std::vector<std::vector<uint32_t>> gaussian(const std::vector<smooth_number>& list, const uint32_t num_primes);
-
+        std::vector<uint32_t>   space_contributions(const std::vector<sparse_vector>& space, const uint32_t basis_size);
+        std::vector<uint32_t>   basis_contributions(const std::vector<sparse_vector>& space, const uint32_t basis_size);
+        std::vector<std::vector<uint32_t>> gaussian(const std::vector<sparse_vector>& space, const uint32_t basis_size);
     }
 }
 
