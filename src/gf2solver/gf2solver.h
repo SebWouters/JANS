@@ -44,10 +44,9 @@ namespace jans {
         uint8_t dotproduct(const std::vector<uint8_t>& first, const std::vector<uint8_t>& second);
         bool update_x(std::vector<uint8_t>& x, const std::vector<uint8_t>& v, const std::vector<uint8_t>& Av, const std::vector<uint8_t>& b);
 
-        std::vector<uint8_t> first_half(const std::vector<sparse_vector>& space, const std::vector<uint8_t>& input, const uint32_t basis_size);
-        std::vector<uint8_t> second_half(const std::vector<sparse_vector>& space, const std::vector<uint8_t>& intermediate, const uint32_t basis_size);
-
-        std::vector<uint8_t> matvec(const std::vector<sparse_vector>& space, const std::vector<uint8_t>& input, const uint32_t basis_size);
+        std::vector<uint8_t>  first_half(const std::vector<sparse_vector>& space, const std::vector<uint8_t>& input, const uint32_t basis_size);
+        std::vector<uint8_t> second_half(const std::vector<sparse_vector>& space, const std::vector<uint8_t>& half,  const uint32_t basis_size);
+        std::vector<uint8_t>      matvec(const std::vector<sparse_vector>& space, const std::vector<uint8_t>& input, const uint32_t basis_size);
     }
 }
 

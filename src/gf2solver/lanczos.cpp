@@ -25,7 +25,7 @@
 #include "gf2solver.h"
 
 /*
-    Return a random vector
+    Return a random vector: TODO: should be bit-random in range [0, 2**NBIT[
 */
 std::vector<uint8_t> jans::gf2solver::random(const uint32_t size)
 {
@@ -61,7 +61,7 @@ std::vector<uint8_t> jans::gf2solver::zeroes(const uint32_t size)
 }
 
 /*
-    Dot product
+    Dot product TODO: should become bitwise matrix
 */
 uint8_t jans::gf2solver::dotproduct(const std::vector<uint8_t>& first, const std::vector<uint8_t>& second)
 {
@@ -73,58 +73,73 @@ uint8_t jans::gf2solver::dotproduct(const std::vector<uint8_t>& first, const std
     }
 }
 
+/*
+    Return half[basis_idx, bit] = sum_{space_idx} space[space_idx][basis_idx] * input[space_idx, bit]
+*/
 std::vector<uint8_t> jans::gf2solver::first_half(const std::vector<sparse_vector>& space, const std::vector<uint8_t>& input, const uint32_t basis_size)
 {
     assert(input.size() == space.size());
+    std::vector<uint8_t> half = zeroes(basis_size);
 
-    // intermediate[basis_idx] = sum_{space_idx} space[space_idx][basis_idx] * input[space_idx]
-    std::vector<uint8_t> intermediate = zeroes(basis_size);
-    for (uint32_t space_idx = 0U; space_idx < space.size(); ++space_idx)
+    #pragma omp parallel
     {
-        if (input[space_idx])
+        std::vector<uint8_t> temp = zeroes(basis_size);
+
+        #pragma omp for schedule(static)
+        for (uint32_t space_idx = 0U; space_idx < space.size(); ++space_idx)
         {
             const sparse_vector& vec = space[space_idx];
             for (const uint32_t basis_idx : vec)
             {
-                intermediate[basis_idx] ^= 1U;
+                temp[basis_idx] ^= input[space_idx];
+            }
+        }
+
+        #pragma omp critical
+        {
+            for (uint32_t basis_idx = 0; basis_idx < basis_size; ++basis_idx)
+            {
+                half[basis_idx] ^= temp[basis_idx];
             }
         }
     }
-    return intermediate;
+
+    return half;
 }
 
-std::vector<uint8_t> jans::gfsolver::second_half(const std::vector<sparse_vector>& space, const std::vector<uint8_t>& intermediate, const uint32_t basis_size)
-{
-    assert(intermediate.size() == basis_size);
 
-    // output[space_idx] = sum_{basis_idx} space[space_idx][basis_idx] * intermediate[basis_idx]
+/*
+    Return output[space_idx, bit] = sum_{basis_idx} space[space_idx][basis_idx] * half[basis_idx, bit]
+*/
+std::vector<uint8_t> jans::gfsolver::second_half(const std::vector<sparse_vector>& space, const std::vector<uint8_t>& half, const uint32_t basis_size)
+{
+    assert(half.size() == basis_size);
     std::vector<uint8_t> output = zeroes(space.size());
+
     #pragma omp parallel for schedule(static)
     for (uint32_t space_idx = 0; space_idx < space.size(); ++space_idx)
     {
-        uint8_t out = 0U;
         const sparse_vector& vec = space[space_idx];
         for (const uint32_t basis_idx : vec)
         {
-            out ^= temp[basis_idx];
+            output[space_idx] ^= half[basis_idx];
         }
-        ouput[space_idx] = out;
     }
     return output;
 }
 
 /*
-    Return space^T * space * input
+    Return output[space_idx, bit] = space^T * space * input[space_idx, bit]
 */
 std::vector<uint8_t> jans::gf2solver::matvec(const std::vector<sparse_vector>& space, const std::vector<uint8_t>& input, const uint32_t basis_size)
 {
-    std::vector<uint8_t> intermediate = first_half(space, input, basis_size);
-    std::vector<uint8_t> output = second_half(space, intermediate, basis_size);
+    std::vector<uint8_t> half   =  first_half(space, input, basis_size);
+    std::vector<uint8_t> output = second_half(space, half,  basis_size);
     return output;
 }
 
 /*
-    Update x
+    Update x: TODO: bitwise
 */
 bool jans::gf2solver::update_x(std::vector<uint8_t>& x, const std::vector<uint8_t>& v, const std::vector<uint8_t>& Av, const std::vector<uint8_t>& b)
 {
@@ -146,7 +161,7 @@ bool jans::gf2solver::update_x(std::vector<uint8_t>& x, const std::vector<uint8_
 }
 
 /*
-    Compute new v and shift down
+    Compute new v and shift down: TODO: bitwise
 */
 void jans::gf2solver::update_v(std::vector<uint8_t>& Av1, std::vector<uint8_t>& v1, std::vector<uint8_t>& Av2, std::vector<uint8_t>& v2)
 {
@@ -175,6 +190,7 @@ void jans::gf2solver::update_v(std::vector<uint8_t>& Av1, std::vector<uint8_t>& 
 
 /*
     Returns std::vector<nullvector>, with nullvector = { index : XOR_index( space[index] ) == null_vector }
+    TODO: bitwise and block_lanczos...
 */
 std::vector<std::vector<uint32_t>> jans::gf2solver::lanczos(const std::vector<sparse_vector>& space, const uint32_t basis_size)
 {
